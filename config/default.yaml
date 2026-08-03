@@ -1,0 +1,67 @@
+nac_controller:
+  ros__parameters:
+    control_rate_hz: 500.0
+    duration_sec: 12.0
+    auto_start: true
+    frame_id: world
+    trajectory.type: circle
+    trajectory.center: [0.0, 0.0, 0.0]
+    trajectory.frequency: 0.20
+    trajectory.radius: 0.08
+    trajectory.line_length: 0.16
+    trajectory.line_axis: [1.0, 0.0, 0.0]
+    trajectory.figure8_width: 0.16
+    trajectory.figure8_height: 0.10
+    impedance.mass: [1.0, 1.0, 1.0]
+    impedance.damping: [12.0, 12.0, 12.0]
+    impedance.stiffness: [35.0, 35.0, 35.0]
+    impedance.external_gain: [1.0, 1.0, 1.0]
+    nac.lambda_gain: [7.0, 7.0, 7.0]
+    nac.feedback_gain: [18.0, 18.0, 20.0]
+    nac.robust_gain: [0.04, 0.04, 0.04]
+    nac.robust_bias: 1.5
+    rbf.num_basis: 31
+    rbf.width: 2.5
+    rbf.input_scale: [0.10, 0.10, 0.10, 0.50, 0.50, 0.50,
+                      0.10, 0.10, 0.10, 0.50, 0.50, 0.50,
+                      3.00, 3.00, 3.00, 0.10, 0.10, 0.10,
+                      0.50, 0.50, 0.50]
+    rbf.feature_clip: 3.0
+    rbf.learning_rate: 5.0
+    rbf.leakage: 0.01
+    rbf.weight_limit: 80.0
+    rbf.seed: 7
+    rbf.adaptation_enabled: true
+    safety.command_limits: [40.0, 40.0, 40.0]
+    safety.command_norm_limit: 55.0
+    safety.watchdog_timeout: 0.10
+    safety.maximum_dt: 0.01
+    safety.cache_size: 8
+    telemetry.rate_hz: 100.0
+    diagnostics.rate_hz: 20.0
+    topics.pose_input: demo/cartesian_pose
+    topics.twist_input: demo/cartesian_twist
+    topics.wrench_input: demo/applied_external_wrench
+    topics.command: nac/wrench_command
+    topics.desired_pose: nac/desired_pose
+    topics.desired_twist: nac/desired_twist
+    topics.impedance_pose: nac/impedance_pose
+    topics.impedance_twist: nac/impedance_twist
+    topics.actual_pose: nac/actual_pose
+    topics.nn_estimate: nac/nn_estimate
+    topics.tracking_error: nac/tracking_error
+    topics.diagnostics: diagnostics
+
+cartesian_demo_plant:
+  ros__parameters:
+    control_rate_hz: 500.0
+    duration_sec: 12.0
+    frame_id: world
+    initial_position: [0.0, 0.0, 0.0]
+    plant_substeps: 4
+    external_wrench_enabled: false
+    external_wrench_amplitude: [0.8, 0.6, 0.4]
+    external_wrench_frequency_hz: 0.35
+    command_watchdog_sec: 0.25
+    diagnostics_rate_hz: 20.0
+    output_directory: ""

@@ -13,9 +13,17 @@ from .neuro_adaptive_controller import (
 from .rbf_network import RBFNetwork
 from .references import ReferenceSample, make_reference
 from .safety import ControllerState, SafetyConfig, SafetySupervisor
+from .simulation import (
+    ComparisonResult,
+    SimulationConfig,
+    SimulationResult,
+    run_comparison,
+    run_simulation,
+)
 
 __all__ = [
     "CartesianImpedanceModel",
+    "ComparisonResult",
     "ControllerOutput",
     "ControllerState",
     "ImpedanceParameters",
@@ -26,5 +34,9 @@ __all__ = [
     "ReferenceSample",
     "SafetyConfig",
     "SafetySupervisor",
+    "SimulationConfig",
+    "SimulationResult",
     "make_reference",
+    "run_comparison",
+    "run_simulation",
 ]
