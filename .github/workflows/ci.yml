@@ -34,6 +34,10 @@ jobs:
       - name: Build and test package
         shell: bash
         run: |
+          mkdir -p /tmp/neuro_adaptive_control_ci/src/neuro_adaptive_control
+          cp -a "${GITHUB_WORKSPACE}/." \
+            /tmp/neuro_adaptive_control_ci/src/neuro_adaptive_control
+          cd /tmp/neuro_adaptive_control_ci
           source /opt/ros/humble/setup.bash
           colcon build --packages-select neuro_adaptive_control
           source install/setup.bash
