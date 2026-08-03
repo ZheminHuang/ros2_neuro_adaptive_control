@@ -1,0 +1,336 @@
+<?xml version="1.0"?>
+<!--
+  Copyright 2026 Zhemin Huang
+  SPDX-License-Identifier: Apache-2.0
+
+  Visualization-only tree mirror of mujoco/ur5e_robotiq_2f85.xml.
+  The MuJoCo model remains the dynamics authority. In particular, the two
+  four-bar loop closures are enforced by MuJoCo equality constraints; this
+  URDF exposes all eight simulated gripper joints without mimic tags so that
+  robot_state_publisher renders the exact MuJoCo state.
+
+  Model transforms and mesh assets originate from MuJoCo Menagerie commit
+  71f066ad0be9cd271f7ed58c030243ef157af9f4. See the adjacent vendored
+  BSD-2-Clause and BSD-3-Clause license files.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ur5e_robotiq_2f85">
+  <xacro:property
+    name="mesh_root"
+    value="package://neuro_adaptive_control/mujoco/assets" />
+
+  <material name="ur_black">
+    <color rgba="0.033 0.033 0.033 1" />
+  </material>
+  <material name="ur_joint_gray">
+    <color rgba="0.278 0.278 0.278 1" />
+  </material>
+  <material name="ur_link_gray">
+    <color rgba="0.82 0.82 0.82 1" />
+  </material>
+  <material name="ur_blue">
+    <color rgba="0.49 0.678 0.8 1" />
+  </material>
+  <material name="gripper_gray">
+    <color rgba="0.4627 0.4627 0.4627 1" />
+  </material>
+  <material name="gripper_black">
+    <color rgba="0.149 0.149 0.149 1" />
+  </material>
+
+  <xacro:macro name="ur_visual" params="mesh material">
+    <visual>
+      <geometry>
+        <mesh filename="${mesh_root}/${mesh}" scale="1 1 1" />
+      </geometry>
+      <material name="${material}" />
+    </visual>
+  </xacro:macro>
+
+  <xacro:macro name="gripper_visual" params="mesh material">
+    <visual>
+      <geometry>
+        <mesh filename="${mesh_root}/${mesh}" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="${material}" />
+    </visual>
+  </xacro:macro>
+
+  <!-- MuJoCo's base body has quat="0 0 0 -1" relative to world. -->
+  <link name="world" />
+  <link name="base">
+    <xacro:ur_visual mesh="base_0.obj" material="ur_black" />
+    <xacro:ur_visual mesh="base_1.obj" material="ur_joint_gray" />
+  </link>
+  <joint name="world_to_base" type="fixed">
+    <parent link="world" />
+    <child link="base" />
+    <origin xyz="0 0 0" rpy="0 0 -3.141592653589793" />
+  </joint>
+
+  <link name="shoulder_link">
+    <xacro:ur_visual mesh="shoulder_0.obj" material="ur_blue" />
+    <xacro:ur_visual mesh="shoulder_1.obj" material="ur_black" />
+    <xacro:ur_visual mesh="shoulder_2.obj" material="ur_joint_gray" />
+  </link>
+  <joint name="shoulder_pan_joint" type="revolute">
+    <parent link="base" />
+    <child link="shoulder_link" />
+    <origin xyz="0 0 0.163" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-6.28319" upper="6.28319" effort="150" velocity="3.141592653589793" />
+  </joint>
+
+  <link name="upper_arm_link">
+    <xacro:ur_visual mesh="upperarm_0.obj" material="ur_link_gray" />
+    <xacro:ur_visual mesh="upperarm_1.obj" material="ur_black" />
+    <xacro:ur_visual mesh="upperarm_2.obj" material="ur_joint_gray" />
+    <xacro:ur_visual mesh="upperarm_3.obj" material="ur_blue" />
+  </link>
+  <joint name="shoulder_lift_joint" type="revolute">
+    <parent link="shoulder_link" />
+    <child link="upper_arm_link" />
+    <origin xyz="0 0.138 0" rpy="0 1.570796326794897 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-6.28319" upper="6.28319" effort="150" velocity="3.141592653589793" />
+  </joint>
+
+  <link name="forearm_link">
+    <xacro:ur_visual mesh="forearm_0.obj" material="ur_blue" />
+    <xacro:ur_visual mesh="forearm_1.obj" material="ur_link_gray" />
+    <xacro:ur_visual mesh="forearm_2.obj" material="ur_black" />
+    <xacro:ur_visual mesh="forearm_3.obj" material="ur_joint_gray" />
+  </link>
+  <joint name="elbow_joint" type="revolute">
+    <parent link="upper_arm_link" />
+    <child link="forearm_link" />
+    <origin xyz="0 -0.131 0.425" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-3.1415" upper="3.1415" effort="150" velocity="3.141592653589793" />
+  </joint>
+
+  <link name="wrist_1_link">
+    <xacro:ur_visual mesh="wrist1_0.obj" material="ur_black" />
+    <xacro:ur_visual mesh="wrist1_1.obj" material="ur_blue" />
+    <xacro:ur_visual mesh="wrist1_2.obj" material="ur_joint_gray" />
+  </link>
+  <joint name="wrist_1_joint" type="revolute">
+    <parent link="forearm_link" />
+    <child link="wrist_1_link" />
+    <origin xyz="0 0 0.392" rpy="0 1.570796326794897 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-6.28319" upper="6.28319" effort="28" velocity="3.141592653589793" />
+  </joint>
+
+  <link name="wrist_2_link">
+    <xacro:ur_visual mesh="wrist2_0.obj" material="ur_black" />
+    <xacro:ur_visual mesh="wrist2_1.obj" material="ur_blue" />
+    <xacro:ur_visual mesh="wrist2_2.obj" material="ur_joint_gray" />
+  </link>
+  <joint name="wrist_2_joint" type="revolute">
+    <parent link="wrist_1_link" />
+    <child link="wrist_2_link" />
+    <origin xyz="0 0.127 0" rpy="0 0 0" />
+    <axis xyz="0 0 1" />
+    <limit lower="-6.28319" upper="6.28319" effort="28" velocity="3.141592653589793" />
+  </joint>
+
+  <link name="wrist_3_link">
+    <xacro:ur_visual mesh="wrist3.obj" material="ur_link_gray" />
+  </link>
+  <joint name="wrist_3_joint" type="revolute">
+    <parent link="wrist_2_link" />
+    <child link="wrist_3_link" />
+    <origin xyz="0 0 0.1" rpy="0 0 0" />
+    <axis xyz="0 1 0" />
+    <limit lower="-6.28319" upper="6.28319" effort="28" velocity="3.141592653589793" />
+  </joint>
+
+  <!-- Flange attachment site preserved separately from the gripper mount. -->
+  <link name="attachment_site" />
+  <joint name="attachment_site_joint" type="fixed">
+    <parent link="wrist_3_link" />
+    <child link="attachment_site" />
+    <origin xyz="0 0.1 0" rpy="-1.570796326794897 0 0" />
+  </joint>
+
+  <link name="gripper_base_mount">
+    <xacro:gripper_visual mesh="base_mount.stl" material="gripper_black" />
+  </link>
+  <joint name="gripper_mount_joint" type="fixed">
+    <parent link="wrist_3_link" />
+    <child link="gripper_base_mount" />
+    <origin xyz="0 0.107 0" rpy="-1.570796326794897 0 0" />
+  </joint>
+
+  <link name="wrist_ft_site" />
+  <joint name="wrist_ft_site_joint" type="fixed">
+    <parent link="gripper_base_mount" />
+    <child link="wrist_ft_site" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <link name="gripper_base">
+    <xacro:gripper_visual mesh="base.stl" material="gripper_black" />
+  </link>
+  <joint name="gripper_base_joint" type="fixed">
+    <parent link="gripper_base_mount" />
+    <child link="gripper_base" />
+    <origin xyz="0 0 0.0038" rpy="0 0 -1.570796326794897" />
+  </joint>
+
+  <link name="gripper_pinch" />
+  <joint name="gripper_pinch_joint" type="fixed">
+    <parent link="gripper_base" />
+    <child link="gripper_pinch" />
+    <origin xyz="0 0 0.145" rpy="0 0 0" />
+  </joint>
+
+  <!-- Right four-bar visualization tree. -->
+  <link name="gripper_right_driver">
+    <xacro:gripper_visual mesh="driver.stl" material="gripper_gray" />
+  </link>
+  <joint name="gripper_right_driver_joint" type="revolute">
+    <parent link="gripper_base" />
+    <child link="gripper_right_driver" />
+    <origin xyz="0 0.0306011 0.054904" rpy="0 0 0" />
+    <axis xyz="1 0 0" />
+    <limit lower="0" upper="0.8" effort="5" velocity="2" />
+  </joint>
+
+  <link name="gripper_right_coupler">
+    <xacro:gripper_visual mesh="coupler.stl" material="gripper_black" />
+  </link>
+  <joint name="gripper_right_coupler_joint" type="revolute">
+    <parent link="gripper_right_driver" />
+    <child link="gripper_right_coupler" />
+    <origin xyz="0 0.0315 -0.0041" rpy="0 0 0" />
+    <axis xyz="1 0 0" />
+    <limit lower="-1.57" upper="0" effort="5" velocity="2" />
+  </joint>
+
+  <link name="gripper_right_spring_link">
+    <xacro:gripper_visual mesh="spring_link.stl" material="gripper_black" />
+  </link>
+  <joint name="gripper_right_spring_link_joint" type="revolute">
+    <parent link="gripper_base" />
+    <child link="gripper_right_spring_link" />
+    <origin xyz="0 0.0132 0.0609" rpy="0 0 0" />
+    <axis xyz="1 0 0" />
+    <limit lower="-0.296706" upper="0.8" effort="5" velocity="2" />
+  </joint>
+
+  <!-- MuJoCo locates the follower hinge away from the body origin. -->
+  <link name="gripper_right_follower_joint_frame" />
+  <joint name="gripper_right_follower_joint" type="revolute">
+    <parent link="gripper_right_spring_link" />
+    <child link="gripper_right_follower_joint_frame" />
+    <origin xyz="0 0.037 0.044" rpy="0 0 0" />
+    <axis xyz="1 0 0" />
+    <limit lower="-0.872664" upper="0.872664" effort="5" velocity="2" />
+  </joint>
+  <link name="gripper_right_follower">
+    <xacro:gripper_visual mesh="follower.stl" material="gripper_black" />
+  </link>
+  <joint name="gripper_right_follower_body_joint" type="fixed">
+    <parent link="gripper_right_follower_joint_frame" />
+    <child link="gripper_right_follower" />
+    <origin xyz="0 0.018 -0.0065" rpy="0 0 0" />
+  </joint>
+
+  <link name="gripper_right_pad">
+    <xacro:gripper_visual mesh="pad.stl" material="gripper_black" />
+  </link>
+  <joint name="gripper_right_pad_joint" type="fixed">
+    <parent link="gripper_right_follower" />
+    <child link="gripper_right_pad" />
+    <origin xyz="0 -0.0189 0.01352" rpy="0 0 0" />
+  </joint>
+  <link name="gripper_right_silicone_pad">
+    <xacro:gripper_visual mesh="silicone_pad.stl" material="gripper_black" />
+  </link>
+  <joint name="gripper_right_silicone_pad_joint" type="fixed">
+    <parent link="gripper_right_pad" />
+    <child link="gripper_right_silicone_pad" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+  <link name="gripper_right_pad_tip" />
+  <joint name="gripper_right_pad_tip_joint" type="fixed">
+    <parent link="gripper_right_pad" />
+    <child link="gripper_right_pad_tip" />
+    <origin xyz="0 -0.0066 0.0375" rpy="0 0 0" />
+  </joint>
+
+  <!-- Left four-bar visualization tree. -->
+  <link name="gripper_left_driver">
+    <xacro:gripper_visual mesh="driver.stl" material="gripper_gray" />
+  </link>
+  <joint name="gripper_left_driver_joint" type="revolute">
+    <parent link="gripper_base" />
+    <child link="gripper_left_driver" />
+    <origin xyz="0 -0.0306011 0.054904" rpy="0 0 3.141592653589793" />
+    <axis xyz="1 0 0" />
+    <limit lower="0" upper="0.8" effort="5" velocity="2" />
+  </joint>
+
+  <link name="gripper_left_coupler">
+    <xacro:gripper_visual mesh="coupler.stl" material="gripper_black" />
+  </link>
+  <joint name="gripper_left_coupler_joint" type="revolute">
+    <parent link="gripper_left_driver" />
+    <child link="gripper_left_coupler" />
+    <origin xyz="0 0.0315 -0.0041" rpy="0 0 0" />
+    <axis xyz="1 0 0" />
+    <limit lower="-1.57" upper="0" effort="5" velocity="2" />
+  </joint>
+
+  <link name="gripper_left_spring_link">
+    <xacro:gripper_visual mesh="spring_link.stl" material="gripper_black" />
+  </link>
+  <joint name="gripper_left_spring_link_joint" type="revolute">
+    <parent link="gripper_base" />
+    <child link="gripper_left_spring_link" />
+    <origin xyz="0 -0.0132 0.0609" rpy="0 0 3.141592653589793" />
+    <axis xyz="1 0 0" />
+    <limit lower="-0.296706" upper="0.8" effort="5" velocity="2" />
+  </joint>
+
+  <link name="gripper_left_follower_joint_frame" />
+  <joint name="gripper_left_follower_joint" type="revolute">
+    <parent link="gripper_left_spring_link" />
+    <child link="gripper_left_follower_joint_frame" />
+    <origin xyz="0 0.037 0.044" rpy="0 0 0" />
+    <axis xyz="1 0 0" />
+    <limit lower="-0.872664" upper="0.872664" effort="5" velocity="2" />
+  </joint>
+  <link name="gripper_left_follower">
+    <xacro:gripper_visual mesh="follower.stl" material="gripper_black" />
+  </link>
+  <joint name="gripper_left_follower_body_joint" type="fixed">
+    <parent link="gripper_left_follower_joint_frame" />
+    <child link="gripper_left_follower" />
+    <origin xyz="0 0.018 -0.0065" rpy="0 0 0" />
+  </joint>
+
+  <link name="gripper_left_pad">
+    <xacro:gripper_visual mesh="pad.stl" material="gripper_black" />
+  </link>
+  <joint name="gripper_left_pad_joint" type="fixed">
+    <parent link="gripper_left_follower" />
+    <child link="gripper_left_pad" />
+    <origin xyz="0 -0.0189 0.01352" rpy="0 0 0" />
+  </joint>
+  <link name="gripper_left_silicone_pad">
+    <xacro:gripper_visual mesh="silicone_pad.stl" material="gripper_black" />
+  </link>
+  <joint name="gripper_left_silicone_pad_joint" type="fixed">
+    <parent link="gripper_left_pad" />
+    <child link="gripper_left_silicone_pad" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+  <link name="gripper_left_pad_tip" />
+  <joint name="gripper_left_pad_tip_joint" type="fixed">
+    <parent link="gripper_left_pad" />
+    <child link="gripper_left_pad_tip" />
+    <origin xyz="0 -0.0066 0.0375" rpy="0 0 0" />
+  </joint>
+</robot>

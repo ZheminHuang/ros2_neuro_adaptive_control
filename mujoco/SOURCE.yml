@@ -1,0 +1,26 @@
+schema_version: 1
+menagerie:
+  repository: https://github.com/google-deepmind/mujoco_menagerie
+  commit: 71f066ad0be9cd271f7ed58c030243ef157af9f4
+  vendored_at: 2026-08-03
+models:
+  - name: universal_robots_ur5e
+    path: vendor/universal_robots_ur5e
+    source_subdirectory: universal_robots_ur5e
+    license: BSD-3-Clause
+    assets: "assets/*.obj"
+  - name: robotiq_2f85
+    path: vendor/robotiq_2f85
+    source_subdirectory: robotiq_2f85
+    license: BSD-2-Clause
+    assets: "assets/*.stl"
+runtime:
+  name: mujoco
+  version: 3.9.0
+  tag_commit: 237c17e48539b6c90bf90d3161547cbdcbfaa1e0
+  license: Apache-2.0
+generated:
+  composite_mjcf: ur5e_robotiq_2f85.xml
+  generator: ../tools/generate_combined_model.py
+  rviz_urdf: ../urdf/ur5e_robotiq_2f85.urdf.xacro
+

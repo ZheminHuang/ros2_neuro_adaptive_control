@@ -4,6 +4,7 @@ install/
 log/
 logs/
 *.log
+MUJOCO_LOG.TXT
 *.egg-info/
 .pytest_cache/
 .coverage
