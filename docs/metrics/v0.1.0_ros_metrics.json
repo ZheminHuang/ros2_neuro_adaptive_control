@@ -1,0 +1,21 @@
+{
+  "command_max_norm_n": 3.4157297837559457,
+  "command_rms_norm_n": 1.3962308195812774,
+  "command_samples": 6001,
+  "desired_tracking_max_error_m": 0.08006596214685469,
+  "desired_tracking_rmse_m": 0.011661577510496075,
+  "external_wrench_enabled": false,
+  "fault_reason": "",
+  "fixed_dt_sec": 0.002,
+  "impedance_tracking_max_error_m": 0.011144089344820423,
+  "impedance_tracking_rmse_m": 0.0017436625044864756,
+  "metric_samples": 1202,
+  "missed_wall_deadlines": 4,
+  "observed_step_rate_hz": 499.06231945885816,
+  "simulated_duration_sec": 12.0,
+  "stamp_mismatches": 0,
+  "state": "stopped",
+  "steps": 6000,
+  "target_rate_hz": 500.0,
+  "wall_duration_sec": 12.022546616033651
+}

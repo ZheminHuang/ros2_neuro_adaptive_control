@@ -12,4 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ROS 2 wrapper nodes around the pure NumPy core."""
+"""Run the ROS 2 Python style linter."""
+
+from ament_flake8.main import main_with_errors
+import pytest
+
+
+@pytest.mark.flake8
+@pytest.mark.linter
+def test_flake8() -> None:
+    """Check Python source for flake8 errors."""
+    return_code, errors = main_with_errors(argv=[])
+    assert return_code == 0, (
+        "Found %d code style errors / warnings:\n" % len(errors)
+        + "\n".join(errors)
+    )

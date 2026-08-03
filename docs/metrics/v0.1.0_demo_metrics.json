@@ -1,0 +1,49 @@
+{
+  "baseline": {
+    "adaptation_enabled": false,
+    "command_max_norm_n": 2.793006801230535,
+    "command_rms_norm_n": 1.3612080444993313,
+    "controller_state": "running",
+    "desired_tracking_max_error_m": 0.08007044923602878,
+    "desired_tracking_rmse_m": 0.015843116268584683,
+    "duration_sec": 12.0,
+    "final_weight_norm": 0.0,
+    "fixed_dt_sec": 0.002,
+    "impedance_tracking_max_error_m": 0.014092287989190832,
+    "impedance_tracking_rmse_m": 0.010220071973952883,
+    "saturation_count": 0,
+    "steps": 6000,
+    "target_rate_hz": 500.0
+  },
+  "comparison": {
+    "baseline_desired_tracking_rmse_m": 0.015843116268584683,
+    "baseline_impedance_tracking_rmse_m": 0.010220071973952883,
+    "desired_rmse_improvement_percent": 27.495074669770943,
+    "impedance_rmse_improvement_percent": 83.09339737164845,
+    "nac_desired_tracking_rmse_m": 0.011487039620518696,
+    "nac_impedance_tracking_rmse_m": 0.0017278669569677373
+  },
+  "nac": {
+    "adaptation_enabled": true,
+    "command_max_norm_n": 3.4157297837559457,
+    "command_rms_norm_n": 1.396347167301956,
+    "controller_state": "running",
+    "desired_tracking_max_error_m": 0.08006631732806534,
+    "desired_tracking_rmse_m": 0.011487039620518696,
+    "duration_sec": 12.0,
+    "final_weight_norm": 0.35893542228487146,
+    "fixed_dt_sec": 0.002,
+    "impedance_tracking_max_error_m": 0.010841658257217298,
+    "impedance_tracking_rmse_m": 0.0017278669569677373,
+    "saturation_count": 0,
+    "steps": 6000,
+    "target_rate_hz": 500.0
+  },
+  "scenario": {
+    "duration_sec": 12.0,
+    "external_wrench_enabled": false,
+    "fixed_dt_sec": 0.002,
+    "seed": 7,
+    "trajectory": "circle"
+  }
+}

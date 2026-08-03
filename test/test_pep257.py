@@ -12,4 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ROS 2 wrapper nodes around the pure NumPy core."""
+"""Run the ROS 2 Python docstring linter."""
+
+from ament_pep257.main import main
+import pytest
+
+
+@pytest.mark.linter
+@pytest.mark.pep257
+def test_pep257() -> None:
+    """Check Python source for PEP 257 errors."""
+    return_code = main(argv=[".", "test"])
+    assert return_code == 0, "Found code style errors / warnings"

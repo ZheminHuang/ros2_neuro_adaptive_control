@@ -12,4 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ROS 2 wrapper nodes around the pure NumPy core."""
+"""Run the ROS 2 copyright and license-header linter."""
+
+from ament_copyright.main import main
+import pytest
+
+
+@pytest.mark.copyright
+@pytest.mark.linter
+def test_copyright() -> None:
+    """Require a recognized copyright and license header in source files."""
+    return_code = main(argv=[".", "test"])
+    assert return_code == 0, "Found copyright or license errors"

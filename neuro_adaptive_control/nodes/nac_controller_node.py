@@ -1,3 +1,17 @@
+# Copyright 2026 Zhemin Huang
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """ROS 2 wrapper for the pure NumPy 3D neuro-adaptive controller."""
 
 from __future__ import annotations
@@ -38,6 +52,17 @@ from neuro_adaptive_control.core.safety import (
 
 
 StampKey = Tuple[int, int]
+
+
+def _finite_positive(value, name: str) -> float:
+    """Return a finite positive float or raise a parameter error."""
+    try:
+        result = float(value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError(f"{name} must be numeric.") from error
+    if not np.isfinite(result) or result <= 0.0:
+        raise ValueError(f"{name} must be finite and positive.")
+    return result
 
 
 def _stamp_key(message) -> StampKey:
@@ -89,40 +114,39 @@ class NACControllerNode(Node):
         self._declare_parameters()
         self.frame_id = str(self.get_parameter("frame_id").value)
         self.auto_start = bool(self.get_parameter("auto_start").value)
-        self.duration_sec = float(self.get_parameter("duration_sec").value)
-        rate_hz = float(self.get_parameter("control_rate_hz").value)
+        self.duration_sec = _finite_positive(
+            self.get_parameter("duration_sec").value, "duration_sec"
+        )
+        rate_hz = _finite_positive(
+            self.get_parameter("control_rate_hz").value,
+            "control_rate_hz",
+        )
         if not self.frame_id:
             raise ValueError("frame_id must not be empty.")
-        if not np.isfinite(rate_hz) or rate_hz <= 0.0:
-            raise ValueError("control_rate_hz must be finite and positive.")
-        if not np.isfinite(self.duration_sec) or self.duration_sec <= 0.0:
-            raise ValueError("duration_sec must be finite and positive.")
         self.dt_ns = int(round(1e9 / rate_hz))
         self.dt = float(self.dt_ns) * 1e-9
         self.target_rate_hz = 1.0 / self.dt
         self.cache_size = int(self.get_parameter("safety.cache_size").value)
         if self.cache_size < 3:
             raise ValueError("safety.cache_size must be at least 3.")
+        telemetry_rate = _finite_positive(
+            self.get_parameter("telemetry.rate_hz").value,
+            "telemetry.rate_hz",
+        )
         self.telemetry_decimation = max(
             1,
-            int(
-                round(
-                    self.target_rate_hz
-                    / float(self.get_parameter("telemetry.rate_hz").value)
-                )
-            ),
+            int(round(self.target_rate_hz / telemetry_rate)),
         )
-        diagnostics_rate = float(
-            self.get_parameter("diagnostics.rate_hz").value
+        diagnostics_rate = _finite_positive(
+            self.get_parameter("diagnostics.rate_hz").value,
+            "diagnostics.rate_hz",
         )
-        if not np.isfinite(diagnostics_rate) or diagnostics_rate <= 0.0:
-            raise ValueError("diagnostics.rate_hz must be finite and positive.")
 
         self.controller = self._build_controller()
         self.reference = self._build_reference()
         self.steady_clock = Clock(clock_type=ClockType.STEADY_TIME)
-        self.node_watchdog_timeout = float(
-            self.get_parameter("safety.watchdog_timeout").value
+        self.node_watchdog_timeout = (
+            self.controller.safety.config.watchdog_timeout
         )
 
         qos = QoSProfile(
@@ -421,8 +445,12 @@ class NACControllerNode(Node):
         self.last_actual_velocity = velocity.copy()
         if self.start_stamp_ns is None:
             self.start_stamp_ns = stamp_ns
+            restart_after_initialization = (
+                self.auto_start
+                or self.controller.state == ControllerState.RUNNING
+            )
             self.controller.reset(position, velocity)
-            if self.auto_start:
+            if restart_after_initialization:
                 self.controller.start(self._steady_seconds())
         elapsed = 1e-9 * float(stamp_ns - self.start_stamp_ns)
         sample = self.reference.evaluate(elapsed)
@@ -578,6 +606,22 @@ class NACControllerNode(Node):
         response.message = self.controller.state.value
         return response
 
+    def _clear_runtime_history(self) -> None:
+        """Clear all timestamp, cache, metric, and duration state."""
+        self.pose_cache.clear()
+        self.twist_cache.clear()
+        self.wrench_cache.clear()
+        self.start_stamp_ns = None
+        self.last_processed_stamp_ns = None
+        self.last_bundle_stamp = None
+        self.last_receive_steady = None
+        self.processed_steps = 0
+        self.saturation_count = 0
+        self.stamp_mismatch_count = 0
+        self.last_output = None
+        self.wall_start = time.monotonic()
+        self._duration_stopped = False
+
     def _reset(self, request, response):
         del request
         if self.controller.state in {
@@ -587,11 +631,11 @@ class NACControllerNode(Node):
             response.success = False
             response.message = "stop the controller before reset"
             return response
+        self._publish_zero()
         self.controller.reset(
             self.last_actual_position, self.last_actual_velocity
         )
-        self.last_output = None
-        self.saturation_count = 0
+        self._clear_runtime_history()
         response.success = True
         response.message = self.controller.state.value
         return response

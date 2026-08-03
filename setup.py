@@ -1,3 +1,6 @@
+# Copyright 2026 Zhemin Huang
+# SPDX-License-Identifier: Apache-2.0
+
 from glob import glob
 
 from setuptools import find_packages, setup
@@ -19,7 +22,7 @@ setup(
         ("share/" + package_name + "/config", glob("config/*.yaml")),
         ("share/" + package_name + "/launch", glob("launch/*.launch.py")),
     ],
-    install_requires=["setuptools"],
+    install_requires=["setuptools", "numpy>=1.21"],
     zip_safe=True,
     maintainer="Zhemin Huang",
     maintainer_email="zheminhuang@users.noreply.github.com",
@@ -28,7 +31,11 @@ setup(
         "tracking for ROS 2."
     ),
     license="Apache-2.0",
-    extras_require={"test": ["pytest"]},
+    extras_require={
+        "plot": ["matplotlib>=3.5"],
+        "test": ["pytest"],
+    },
+    python_requires=">=3.10",
     entry_points={
         "console_scripts": [
             (

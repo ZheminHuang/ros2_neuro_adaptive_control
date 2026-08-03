@@ -2,6 +2,8 @@
 build/
 install/
 log/
+logs/
+*.log
 *.egg-info/
 .pytest_cache/
 .coverage
@@ -21,6 +23,22 @@ venv/
 
 # Generated experiment outputs
 results/
+nac_logs/
+data/
+datasets/
 *.bag
 *.db3
+*.mcap
+*.mp4
+*.mov
+*.avi
+*.mkv
 
+# Credentials and local environment
+.env
+.env.*
+*.key
+*.pem
+*.p12
+credentials*.json
+secrets/

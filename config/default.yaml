@@ -1,3 +1,6 @@
+# Copyright 2026 Zhemin Huang
+# SPDX-License-Identifier: Apache-2.0
+
 nac_controller:
   ros__parameters:
     control_rate_hz: 500.0
@@ -59,9 +62,11 @@ cartesian_demo_plant:
     frame_id: world
     initial_position: [0.0, 0.0, 0.0]
     plant_substeps: 4
+    external_gain: [1.0, 1.0, 1.0]
     external_wrench_enabled: false
     external_wrench_amplitude: [0.8, 0.6, 0.4]
     external_wrench_frequency_hz: 0.35
     command_watchdog_sec: 0.25
     diagnostics_rate_hz: 20.0
     output_directory: ""
+    topics.external_wrench_input: demo/external_wrench_input

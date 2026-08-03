@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using this metadata."
+title: "ROS 2 Neuro-Adaptive Control"
+type: software
+authors:
+  - family-names: Huang
+    given-names: Zhemin
+version: 0.1.0
+date-released: 2026-08-03
+license: Apache-2.0
+repository-code: "https://github.com/ZheminHuang/ros2_neuro_adaptive_control"
+url: "https://github.com/ZheminHuang/ros2_neuro_adaptive_control"
+keywords:
+  - ROS 2
+  - neuro-adaptive control
+  - impedance control
+  - radial basis function network
+  - Cartesian control

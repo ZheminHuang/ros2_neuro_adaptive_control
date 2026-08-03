@@ -1,3 +1,17 @@
+# Copyright 2026 Zhemin Huang
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Deterministic unknown-dynamics Cartesian plant for the ROS 2 demo."""
 
 from __future__ import annotations
@@ -20,6 +34,17 @@ from neuro_adaptive_control.core.simulation import UnknownCartesianPlant
 
 
 StampKey = Tuple[int, int]
+
+
+def _finite_positive(value, name: str) -> float:
+    """Return a finite positive float or raise a parameter error."""
+    try:
+        result = float(value)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError(f"{name} must be numeric.") from error
+    if not np.isfinite(result) or result <= 0.0:
+        raise ValueError(f"{name} must be finite and positive.")
+    return result
 
 
 def _key_from_stamp(stamp) -> StampKey:
@@ -62,19 +87,24 @@ class CartesianDemoPlant(Node):
         self.declare_parameter("frame_id", "world")
         self.declare_parameter("initial_position", [0.0, 0.0, 0.0])
         self.declare_parameter("plant_substeps", 4)
+        self.declare_parameter("external_gain", [1.0, 1.0, 1.0])
         self.declare_parameter("external_wrench_enabled", False)
         self.declare_parameter("external_wrench_amplitude", [0.8, 0.6, 0.4])
         self.declare_parameter("external_wrench_frequency_hz", 0.35)
         self.declare_parameter("command_watchdog_sec", 0.25)
         self.declare_parameter("diagnostics_rate_hz", 20.0)
         self.declare_parameter("output_directory", "")
+        self.declare_parameter(
+            "topics.external_wrench_input", "demo/external_wrench_input"
+        )
 
-        rate_hz = float(self.get_parameter("control_rate_hz").value)
-        self.duration_sec = float(self.get_parameter("duration_sec").value)
-        if not np.isfinite(rate_hz) or rate_hz <= 0.0:
-            raise ValueError("control_rate_hz must be finite and positive.")
-        if not np.isfinite(self.duration_sec) or self.duration_sec <= 0.0:
-            raise ValueError("duration_sec must be finite and positive.")
+        rate_hz = _finite_positive(
+            self.get_parameter("control_rate_hz").value,
+            "control_rate_hz",
+        )
+        self.duration_sec = _finite_positive(
+            self.get_parameter("duration_sec").value, "duration_sec"
+        )
         self.dt_ns = int(round(1e9 / rate_hz))
         self.dt = 1e-9 * float(self.dt_ns)
         self.target_rate_hz = 1.0 / self.dt
@@ -87,7 +117,18 @@ class CartesianDemoPlant(Node):
         if initial_position.shape != (3,) or not np.all(np.isfinite(initial_position)):
             raise ValueError("initial_position must be a finite vector of length 3.")
         substeps = int(self.get_parameter("plant_substeps").value)
-        self.plant = UnknownCartesianPlant(initial_position, substeps=substeps)
+        external_gain = np.asarray(
+            self.get_parameter("external_gain").value, dtype=float
+        )
+        if external_gain.shape != (3,) or not np.all(np.isfinite(external_gain)):
+            raise ValueError(
+                "external_gain must be a finite vector of length 3."
+            )
+        self.plant = UnknownCartesianPlant(
+            initial_position,
+            substeps=substeps,
+            external_gain=external_gain,
+        )
         self.initial_position = initial_position.copy()
         self.external_wrench_enabled = bool(
             self.get_parameter("external_wrench_enabled").value
@@ -102,13 +143,18 @@ class CartesianDemoPlant(Node):
             raise ValueError(
                 "external_wrench_amplitude must be a finite vector of length 3."
             )
-        self.external_frequency = float(
-            self.get_parameter("external_wrench_frequency_hz").value
+        self.external_frequency = _finite_positive(
+            self.get_parameter("external_wrench_frequency_hz").value,
+            "external_wrench_frequency_hz",
         )
-        self.command_watchdog_sec = float(
-            self.get_parameter("command_watchdog_sec").value
+        self.command_watchdog_sec = _finite_positive(
+            self.get_parameter("command_watchdog_sec").value,
+            "command_watchdog_sec",
         )
-        diagnostics_rate = float(self.get_parameter("diagnostics_rate_hz").value)
+        diagnostics_rate = _finite_positive(
+            self.get_parameter("diagnostics_rate_hz").value,
+            "diagnostics_rate_hz",
+        )
         self.diagnostic_period_steps = max(
             1, int(round(self.target_rate_hz / diagnostics_rate))
         )
@@ -139,7 +185,7 @@ class CartesianDemoPlant(Node):
         )
         self.external_subscription = self.create_subscription(
             WrenchStamped,
-            "demo/external_wrench_input",
+            str(self.get_parameter("topics.external_wrench_input").value),
             self._on_external_input,
             qos,
         )
@@ -269,6 +315,8 @@ class CartesianDemoPlant(Node):
             self._fault("received command contains NaN or Inf")
             return
         if self.pending_command is not None:
+            if np.all(command == 0.0):
+                self.pending_command = np.zeros(3, dtype=float)
             return
         self.pending_command = command
 

@@ -1,3 +1,17 @@
+# Copyright 2026 Zhemin Huang
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Deterministic, ROS-independent unknown-dynamics demonstration."""
 
 from __future__ import annotations
@@ -88,14 +102,24 @@ class UnknownCartesianPlant:
         initial_position: np.ndarray | tuple[float, float, float],
         *,
         substeps: int = 4,
+        external_gain: np.ndarray
+        | tuple[float, float, float] = (1.0, 1.0, 1.0),
     ) -> None:
         position = np.asarray(initial_position, dtype=float)
         if position.shape != (3,) or not np.all(np.isfinite(position)):
             raise ValueError("initial_position must be a finite 3-vector.")
         if substeps <= 0:
             raise ValueError("substeps must be positive.")
+        gain = np.asarray(external_gain, dtype=float)
+        if gain.shape == (3,):
+            gain = np.diag(gain)
+        if gain.shape != (3, 3) or not np.all(np.isfinite(gain)):
+            raise ValueError(
+                "external_gain must be a finite 3-vector or 3x3 matrix."
+            )
         self.initial_position = position.copy()
         self.substeps = int(substeps)
+        self._external_gain = gain.copy()
         self._mass = np.array(
             [[1.75, 0.10, 0.04], [0.10, 1.30, 0.06], [0.04, 0.06, 2.05]],
             dtype=float,
@@ -150,7 +174,7 @@ class UnknownCartesianPlant:
             acceleration = np.linalg.solve(
                 self._mass,
                 force
-                + external
+                + self._external_gain @ external
                 - self._damping @ self.velocity
                 - self._unknown_force(),
             )

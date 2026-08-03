@@ -1,0 +1,32 @@
+# Copyright 2026 Zhemin Huang
+# SPDX-License-Identifier: Apache-2.0
+
+name: ROS 2 Humble CI
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Configure ROS 2
+        uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: humble
+      - name: Build and test package
+        uses: ros-tooling/action-ros-ci@v0.4
+        with:
+          package-name: neuro_adaptive_control
+          target-ros2-distro: humble
+          no-symlink-install: true
