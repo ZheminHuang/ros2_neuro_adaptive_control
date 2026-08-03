@@ -376,7 +376,9 @@ def test_headless_grasp_launch_starts_and_publishes_state(
             f"grasp graph failed to become observable; nodes={observed_nodes}, "
             f"topics={ros_observer.counts}\n{output[-8000:]}"
         )
-    output = _spin_until_exit(ros_observer, process, timeout_sec=30.0)
+    # GitHub's container can run contact dynamics below 0.4 real-time factor;
+    # keep all 5,500-step assertions while allowing the finite run to finish.
+    output = _spin_until_exit(ros_observer, process, timeout_sec=90.0)
     assert process.returncode == 0, output[-8000:]
     assert "mujoco_ur5e_plant startup failed" not in output
     assert metrics_path.is_file(), output[-8000:]
