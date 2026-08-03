@@ -200,9 +200,12 @@ def test_nominal_contact_dynamics_remain_finite_without_solver_warnings(model):
     ),
 )
 def test_nonfinite_inputs_are_reported_by_mujoco_warning_counters(
-    model, field_name, warning_name
+    model, field_name, warning_name, monkeypatch, tmp_path
 ):
     """A NaN state or command must never pass through without a warning."""
+    # MuJoCo writes MUJOCO_LOG.TXT for these intentional warnings. Keep that
+    # runtime artifact out of the release source tree.
+    monkeypatch.chdir(tmp_path)
     data = mujoco.MjData(model)
     getattr(data, field_name)[0] = np.nan
     mujoco.mj_step(model, data)
