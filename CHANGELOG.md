@@ -2,6 +2,62 @@
 
 All notable changes are documented here. The project follows semantic versioning.
 
+## [Unreleased] - v0.2.0 candidate
+
+### Added
+
+- Single-owner MuJoCo 3.9.0 simulation of a six-joint UR5e, articulated
+  eight-joint Robotiq 2F-85, table, and dynamic grasp object.
+- A 27D robot regressor using six arm positions, six arm velocities, and the
+  existing impedance/error features while retaining a 3D translational NAC
+  output.
+- Frame-explicit Cartesian-force-to-joint-torque mapping through the
+  translational Jacobian, plus independent non-adaptive orientation hold,
+  joint damping, torque-rate limits, and torque limits.
+- Standard `control_msgs/action/GripperCommand` bridge with measured opening,
+  effort, contact, reached-goal, stalled, cancel, timeout, and reset behavior.
+- Contact-only environment-on-robot wrench, separate raw wrist cut-wrench,
+  injected and virtual-FT external-force modes, contact diagnostics, and
+  display markers.
+- Display-only RViz launch for trajectory tracking and an automated dynamic
+  grasp/lift/hold launch, with an optional native MuJoCo passive viewer and
+  headless operation.
+- Deterministic four-reference tracking benchmark, matched frozen-weight
+  circle baseline, grasp benchmark, machine-readable JSON, generated plots,
+  source/model/history hashes, and candidate release audit.
+- Vendored, pinned MuJoCo Menagerie model inputs and meshes with manifests,
+  provenance, fidelity limitations, and retained BSD license notices.
+
+### Changed
+
+- Package candidate metadata is 0.2.0 while the latest published release and
+  citation metadata remain v0.1.0 until publication.
+- The MuJoCo loop uses a fixed 0.002 s controller period and exactly four
+  0.0005 s `implicitfast` physics substeps per accepted command.
+- Downstream torque or torque-rate saturation restores the pre-step RBF
+  weights; Cartesian force saturation remains a separate core limiter.
+- README now distinguishes MuJoCo dynamics ownership from RViz visualization,
+  3D adaptive translation from fixed orientation hold, and articulated model
+  completeness from manufacturer-calibrated digital-twin fidelity.
+
+### Candidate evidence
+
+- Matched 8 s circle impedance RMSE: 0.0328492 m frozen weights versus
+  0.00385451 m adaptive NAC (88.266% lower); all four adaptive references
+  stopped without fault.
+- The 11 s grasp run lifted the object 0.0776457 m, held for 2.0 s with
+  0.000396843 m drop, used at most 2.0 N gripper effort, and stopped without
+  unexpected contact, solver warning, torque saturation, or fault.
+- Results are deterministic bundled-simulation evidence only, not hardware,
+  general-performance, formal-stability, or hard-real-time claims.
+
+### Release gate
+
+- This section is intentionally undated and unreleased. Do not create the
+  v0.2.0 tag or public release until the user visually accepts both RViz demos
+  and the final Humble build, test, privacy, license, provenance, and
+  clean-tree audits pass.
+
 ## [0.1.0] - 2026-08-03
 
 ### Added

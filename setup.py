@@ -11,7 +11,7 @@ package_name = "neuro_adaptive_control"
 
 setup(
     name=package_name,
-    version="0.1.0",
+    version="0.2.0",
     packages=find_packages(exclude=("test",)),
     data_files=[
         (
@@ -19,8 +19,25 @@ setup(
             ["resource/" + package_name],
         ),
         ("share/" + package_name, ["package.xml"]),
+        ("share/" + package_name, ["THIRD_PARTY_NOTICES.md"]),
         ("share/" + package_name + "/config", glob("config/*.yaml")),
         ("share/" + package_name + "/launch", glob("launch/*.launch.py")),
+        ("share/" + package_name + "/mujoco", glob("mujoco/*.*")),
+        ("share/" + package_name + "/mujoco", ["mujoco/SHA256SUMS"]),
+        (
+            "share/" + package_name + "/mujoco/assets",
+            glob("mujoco/assets/*"),
+        ),
+        (
+            "share/" + package_name + "/mujoco/vendor/robotiq_2f85",
+            glob("mujoco/vendor/robotiq_2f85/*"),
+        ),
+        (
+            "share/" + package_name + "/mujoco/vendor/universal_robots_ur5e",
+            glob("mujoco/vendor/universal_robots_ur5e/*"),
+        ),
+        ("share/" + package_name + "/urdf", glob("urdf/*")),
+        ("share/" + package_name + "/rviz", glob("rviz/*")),
     ],
     install_requires=["setuptools", "numpy>=1.21"],
     zip_safe=True,
@@ -33,6 +50,7 @@ setup(
     license="Apache-2.0",
     extras_require={
         "plot": ["matplotlib>=3.5"],
+        "mujoco": ["numpy==1.24.4", "mujoco==3.9.0"],
         "test": ["pytest"],
     },
     python_requires=">=3.10",
@@ -45,6 +63,19 @@ setup(
             (
                 "cartesian_demo_plant = "
                 "neuro_adaptive_control.nodes.cartesian_demo_plant:main"
+            ),
+            (
+                "mujoco_ur5e_plant_node = "
+                "neuro_adaptive_control.nodes.mujoco_ur5e_plant_node:main"
+            ),
+            (
+                "robotiq_gripper_action_server = "
+                "neuro_adaptive_control.nodes."
+                "robotiq_gripper_action_server:main"
+            ),
+            (
+                "mujoco_rviz_bridge = "
+                "neuro_adaptive_control.nodes.mujoco_rviz_bridge:main"
             ),
         ],
     },

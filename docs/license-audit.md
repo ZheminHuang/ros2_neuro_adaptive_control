@@ -2,6 +2,13 @@
 
 Audit date: 2026-08-03.
 
+> Historical record: this page describes the published v0.1.0 source tree.
+> The vendored robot-model assets and generated GUI evidence added by the
+> v0.2.0 candidate are audited separately in
+> [`v0.2.0_release_audit.md`](v0.2.0_release_audit.md),
+> [`ur5e_robotiq_model_provenance.md`](ur5e_robotiq_model_provenance.md), and
+> [`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).
+
 ## First-party material
 
 - All Python, launch, configuration, test, documentation, and workflow files

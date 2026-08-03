@@ -33,7 +33,7 @@ writes `mujoco/ur5e_robotiq_2f85.xml`. The deliberate changes are:
 4. preserve the Robotiq split tendon, two loop-closure connects, driver
    equality, collision exclusions, pad friction, `solref`, and `solimp`;
 5. add a wrist sensor site, table, ground, and an explicitly inertialized
-   0.20 kg free box;
+   first-party 0.20 kg benchmark box;
 6. add force/torque sensors at the gripper mount.
 
 The RViz URDF is independently authored from the generated MJCF's exact joint
@@ -41,6 +41,16 @@ tree, axes, zero transforms, limits, attachment, and mesh URIs. It contains
 eight independent Robotiq visualization joints because URDF cannot represent
 the MuJoCo closed-loop equality constraints. Their positions always come from
 MuJoCo `/joint_states`; no RViz mimic or IK animation fabricates motion.
+
+The benchmark object is a project-defined primitive, not a copied or
+manufacturer-calibrated asset. Its nominal inertial envelope is a uniform
+0.05 m by 0.05 m by 0.08 m box with mass 0.20 kg. Applying
+$I_{xx}=m(b^2+c^2)/12$, $I_{yy}=m(a^2+c^2)/12$, and
+$I_{zz}=m(a^2+b^2)/12$ gives the committed diagonal inertia
+`0.000148333 0.000148333 0.0000833333` kg m^2. The contact box is deliberately
+inset to 0.04 m by 0.04 m by 0.08 m (5 mm per lateral face); this is a stated
+benchmark contact approximation, not an unidentified physical-object
+parameter. Tracking and grasp claims apply only to this bundled definition.
 
 ## Fidelity classification
 
@@ -93,4 +103,3 @@ prove that the gripper payload changes arm dynamics.
   https://github.com/google-deepmind/mujoco/releases/tag/3.9.0
 - Robotiq 2F-85/2F-140 instruction manual (aggregate comparison only):
   https://assets.robotiq.com/website-assets/support_archives/document_en/2F-85_2F-140_Instruction_Manual_PDF_20181130.pdf
-

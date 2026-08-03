@@ -1,0 +1,148 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Selection
+    Name: Selection
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.55
+      Cell Size: 0.1
+      Class: rviz_default_plugins/Grid
+      Color: 100; 100; 105
+      Enabled: true
+      Name: Ground Grid
+      Plane: XY
+      Plane Cell Count: 30
+      Reference Frame: world
+      Value: true
+    - Class: rviz_default_plugins/RobotModel
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /robot_description
+      Enabled: true
+      Name: MuJoCo Joint-State Robot
+      Visual Enabled: true
+      Collision Enabled: false
+      Alpha: 1
+      Value: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Name: TF Tree
+      Show Arrows: false
+      Show Axes: false
+      Show Names: false
+      Update Interval: 0
+      Value: true
+    - Class: rviz_default_plugins/Axes
+      Enabled: true
+      Length: 0.12
+      Name: MuJoCo TCP Frame
+      Radius: 0.008
+      Reference Frame: mujoco_tcp
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: Desired Path (green)
+      Color: 0; 255; 0
+      Line Style: Lines
+      Line Width: 0.008
+      Buffer Length: 1
+      Pose Style: None
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /mujoco/desired_path
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: Impedance Path (blue)
+      Color: 0; 80; 255
+      Line Style: Lines
+      Line Width: 0.008
+      Buffer Length: 1
+      Pose Style: None
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /mujoco/impedance_path
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Enabled: true
+      Name: Actual MuJoCo TCP Path (red)
+      Color: 255; 0; 0
+      Line Style: Lines
+      Line Width: 0.008
+      Buffer Length: 1
+      Pose Style: None
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /mujoco/actual_path
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Table Object Positions and Wrenches
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /mujoco/scene_markers
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: Finger Contacts and Normals
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /mujoco/contact_markers
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 32; 34; 38
+    Fixed Frame: world
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+      Hide Inactive Objects: true
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 1.65
+      Focal Point:
+        X: -0.05
+        Y: 0.30
+        Z: 0.38
+      Name: Current View
+      Pitch: 0.38
+      Target Frame: world
+      Value: Orbit (rviz)
+      Yaw: 0.80
+    Saved: ~
+Window Geometry:
+  Height: 1000
+  Width: 1600
+  X: 50
+  Y: 40

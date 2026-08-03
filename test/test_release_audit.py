@@ -12,6 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ROS 2 neuro-adaptive Cartesian impedance control."""
+"""Keep the open-source release audit executable in CI."""
 
-__version__ = "0.2.0"
+from pathlib import Path
+import sys
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROJECT_ROOT / "tools"))
+
+from audit_release import audit_repository  # noqa: E402
+
+
+def test_release_tree_contains_no_private_or_unlicensed_artifacts() -> None:
+    """Scan source and untracked candidate files, excluding only build caches."""
+    findings = audit_repository(PROJECT_ROOT)
+    assert not findings, "\n".join(
+        f"{finding.path}: {finding.reason}" for finding in findings
+    )

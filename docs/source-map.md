@@ -1,8 +1,11 @@
 # Source map and provenance
 
-The implementation was written independently from equations and behavior
-checks. No source file, figure, table, log, calibration, robot asset, or prose
-was copied from either reference repository.
+The controller and ROS implementation were written independently from
+equations and behavior checks. No source file, figure, table, log,
+calibration, hardware detail, or prose was copied from either legacy reference
+repository. The separately audited UR5e and Robotiq model assets now vendored
+for the v0.2.0 candidate come from a pinned MuJoCo Menagerie revision, not
+from either legacy repository.
 
 ## Mathematical sources checked
 
@@ -33,14 +36,21 @@ deterministic reset are explicit new project contracts.
 
 ## License boundary
 
-All code in this repository is newly authored for this project and released
-under Apache-2.0. Apache-2.0 applies only to this repository. It does not
-relicense the manuscript, either reference implementation, ROS/Ubuntu
-dependencies, or generated third-party tooling.
+All first-party code in this repository is newly authored for this project and
+released under Apache-2.0. Apache-2.0 does not relicense the manuscript,
+either legacy implementation, ROS/Ubuntu dependencies, or vendored model
+assets. The pinned UR5e assets retain BSD-3-Clause terms and the pinned
+Robotiq assets retain BSD-2-Clause terms; their exact revision, transformations,
+hashes, and fidelity limits are recorded in
+[`ur5e_robotiq_model_provenance.md`](ur5e_robotiq_model_provenance.md),
+[`../mujoco/SOURCE.yml`](../mujoco/SOURCE.yml), and
+[`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).
 
 The release dependency and first-party license review is recorded in
 [`license-audit.md`](license-audit.md).
 
-The demo image is generated entirely from this repository's deterministic
-NumPy simulation. No robot mesh, participant data, video, or external media is
-included.
+The v0.1 plot and v0.2 benchmark plots are generated from repository-owned
+simulation histories. The v0.2 candidate also includes 28 audited Menagerie
+mesh files and two direct GUI captures of this bundled model. No participant
+data, calibration, private log, video, manuscript figure, or other external
+media is included.

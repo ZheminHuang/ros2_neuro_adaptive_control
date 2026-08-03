@@ -1,0 +1,28 @@
+# Copyright 2026 Zhemin Huang
+# SPDX-License-Identifier: Apache-2.0
+
+mujoco_ur5e_plant:
+  ros__parameters:
+    model_path: ""
+    scenario: trajectory
+    trajectory: circle
+    duration_sec: 12.0
+    adaptation_enabled: true
+    external_wrench_mode: none
+    seed: 23
+    frame_id: world
+    visualization_rate_hz: 20.0
+    shutdown_when_complete: true
+    start_mujoco_viewer: false
+    metrics_path: ""
+    grasp_descent_m: 0.100
+    grasp_lift_m: 0.080
+    grasp_maximum_effort_n: 2.0
+    grasp_contact_force_limit_n: 180.0
+
+robotiq_gripper_action_server:
+  ros__parameters:
+    action_name: robotiq_gripper/gripper_command
+    goal_timeout_sec: 8.0
+    maximum_opening_m: 0.085
+    maximum_effort_n: 5.0
