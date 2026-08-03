@@ -16,17 +16,26 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-22.04
-    timeout-minutes: 20
+    container: ros:humble-ros-base-jammy
+    timeout-minutes: 15
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
-      - name: Configure ROS 2
-        uses: ros-tooling/setup-ros@v0.7
-        with:
-          required-ros-distributions: humble
+        uses: actions/checkout@v6
+      - name: Install test dependencies
+        shell: bash
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
+            python3-numpy \
+            python3-pytest \
+            ros-humble-ament-copyright \
+            ros-humble-ament-flake8 \
+            ros-humble-ament-pep257
       - name: Build and test package
-        uses: ros-tooling/action-ros-ci@v0.4
-        with:
-          package-name: neuro_adaptive_control
-          target-ros2-distro: humble
-          no-symlink-install: true
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --packages-select neuro_adaptive_control
+          source install/setup.bash
+          colcon test --packages-select neuro_adaptive_control
+          colcon test-result --verbose
