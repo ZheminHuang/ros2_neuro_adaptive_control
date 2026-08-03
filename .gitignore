@@ -1,0 +1,26 @@
+# ROS 2 and Python build products
+build/
+install/
+log/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Python bytecode and environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*~
+.DS_Store
+
+# Generated experiment outputs
+results/
+*.bag
+*.db3
+
