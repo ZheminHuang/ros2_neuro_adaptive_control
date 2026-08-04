@@ -105,10 +105,11 @@ event. The nominal model-based baseline knows the bundled robot/gripper model
 but not the payload. The oracle baseline adds known payload gravity/COM
 compensation after acquisition and is reported as an upper reference.
 
-The common 13.5 s scenario contains unloaded 6D motion, approach, close, lift,
-loaded 6D tracking, lower, release, and retreat. All variants share reference,
-payload, controller period, four physics substeps, actuator limits, camera,
-and safety checks.
+The common 15 s scenario contains unloaded 6D motion, approach, close, an
+80 mm lift, one smooth 40 mm-radius loaded XY circle, lower, release, and
+retreat. Bounded orientation excitation runs during the circle and returns to
+the pickup orientation. All variants share reference, payload, controller
+period, four physics substeps, actuator limits, camera, and safety checks.
 
 ## Legacy v0.2 robot RBF input and 3D output
 

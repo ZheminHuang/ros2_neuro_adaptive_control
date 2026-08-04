@@ -18,17 +18,18 @@ collision, contact, and transfer from table support to the closed gripper all
 participate in the dynamics; the NAC never receives payload mass, COM,
 inertia, contact parameters, `qM`, or `qfrc_bias`.
 
-Across three held-out 240–360 g payloads with different COM and inertia, both
-adaptive and payload-time-frozen controllers completed every trial safely:
+Across three held-out 0.50–1.00 kg payloads with different COM and inertia,
+both controllers completed the grasp, 80 mm lift, one 40 mm-radius Cartesian
+circle, replacement, and release safely:
 
 | Loaded-phase median | Adaptive NAC | Frozen at pickup | Improvement |
 |---|---:|---:|---:|
-| Position RMSE | 6.50 mm | 13.78 mm | 52.8% lower |
-| Rotation-vector RMSE | 1.37 mrad | 4.92 mrad | 72.2% lower |
+| Position RMSE | 0.239 mm | 1.143 mm | 79.1% lower |
+| Rotation-vector RMSE | 0.236 mrad | 1.057 mrad | 77.7% lower |
 | Completion | 3 / 3 | 3 / 3 | no added failures |
 
-For the offset 310 g showcase, the nominal model-based controller's loaded
-position RMSE was 5.75× its unloaded value and its orientation RMSE was 2.57×
+For the offset 0.75 kg showcase, the nominal model-based controller's loaded
+position RMSE was 12.38× its unloaded value and its orientation RMSE was 4.92×
 its unloaded value. The payload-aware oracle is included as an upper reference,
 so the comparison does not imply that every model-based controller must ignore
 payload changes.

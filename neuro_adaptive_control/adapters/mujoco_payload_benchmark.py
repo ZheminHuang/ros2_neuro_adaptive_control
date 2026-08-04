@@ -80,8 +80,8 @@ class PayloadCase:
 
 
 DEFAULT_PAYLOAD_CASE = PayloadCase(
-    name="showcase_310g_offset",
-    mass_kg=0.31,
+    name="showcase_750g_offset",
+    mass_kg=0.75,
     com_offset_m=(0.004, -0.003, 0.002),
     inertia_scale=1.15,
     seed=41,
@@ -89,16 +89,16 @@ DEFAULT_PAYLOAD_CASE = PayloadCase(
 
 HELD_OUT_PAYLOAD_CASES = (
     PayloadCase(
-        name="light_240g",
-        mass_kg=0.24,
+        name="light_500g",
+        mass_kg=0.50,
         com_offset_m=(-0.003, 0.002, 0.0),
         inertia_scale=0.90,
         seed=53,
     ),
     DEFAULT_PAYLOAD_CASE,
     PayloadCase(
-        name="heavy_360g",
-        mass_kg=0.36,
+        name="heavy_1000g",
+        mass_kg=1.00,
         com_offset_m=(0.005, 0.004, 0.003),
         inertia_scale=1.25,
         seed=67,
@@ -112,10 +112,10 @@ class PayloadBenchmarkConfig:
 
     controller: BenchmarkController = BenchmarkController.ADAPTIVE_NAC
     payload: PayloadCase = DEFAULT_PAYLOAD_CASE
-    duration_sec: float = 13.5
+    duration_sec: float = 15.0
     control_period_sec: float = 0.002
-    maximum_gripper_effort_n: float = 3.0
-    maximum_contact_force_n: float = 250.0
+    maximum_gripper_effort_n: float = 5.0
+    maximum_contact_force_n: float = 300.0
 
     def __post_init__(self) -> None:
         controller = BenchmarkController(self.controller)
@@ -132,8 +132,8 @@ class PayloadBenchmarkConfig:
             object.__setattr__(self, name, value)
         if not np.isclose(self.control_period_sec, 0.002, atol=1.0e-15):
             raise ValueError("control period must be exactly 0.002 s")
-        if not np.isclose(self.duration_sec, 13.5, atol=1.0e-12):
-            raise ValueError("duration must preserve the canonical 13.5 s schedule")
+        if not np.isclose(self.duration_sec, 15.0, atol=1.0e-12):
+            raise ValueError("duration must preserve the canonical 15.0 s schedule")
 
 
 @dataclass(frozen=True)
@@ -203,17 +203,48 @@ def _quintic_segment(
 
 
 def _loaded_trajectory(time_sec: float, center: np.ndarray) -> PoseReferenceSample:
-    duration = 4.0
+    """Trace one smooth XY circle while retaining six-DoF excitation."""
+    duration = 5.0
     normalized = (time_sec - 6.5) / duration
-    base_frequency = 2.0 * np.pi / duration
-    harmonic = np.array((1.0, 1.0, 2.0, 1.0, 2.0, 1.0))
-    sign = np.array((1.0, -1.0, 1.0, 1.0, -1.0, 1.0))
-    amplitude = np.array((0.018, 0.014, 0.012, 0.055, 0.045, 0.065))
-    omega = base_frequency * harmonic
-    angle = 2.0 * np.pi * normalized * harmonic
-    position = center + 0.5 * sign * amplitude * (1.0 - np.cos(angle))
-    velocity = 0.5 * sign * amplitude * omega * np.sin(angle)
-    acceleration = 0.5 * sign * amplitude * omega**2 * np.cos(angle)
+    s = np.clip(normalized, 0.0, 1.0)
+    phase_scale = 10.0 * s**3 - 15.0 * s**4 + 6.0 * s**5
+    phase_rate = (30.0 * s**2 - 60.0 * s**3 + 30.0 * s**4) / duration
+    phase_acceleration = (
+        60.0 * s - 180.0 * s**2 + 120.0 * s**3
+    ) / duration**2
+    angle = 2.0 * np.pi * phase_scale
+    angle_rate = 2.0 * np.pi * phase_rate
+    angle_acceleration = 2.0 * np.pi * phase_acceleration
+    radius = 0.040
+    position = center.copy()
+    position[:3] += np.array(
+        (radius * (np.cos(angle) - 1.0), radius * np.sin(angle), 0.0)
+    )
+    position[3:] += np.array(
+        (0.035 * np.sin(angle), 0.030 * (1.0 - np.cos(angle)), 0.040 * np.sin(2.0 * angle))
+    )
+    derivative = np.array(
+        (
+            -radius * np.sin(angle),
+            radius * np.cos(angle),
+            0.0,
+            0.035 * np.cos(angle),
+            0.030 * np.sin(angle),
+            0.080 * np.cos(2.0 * angle),
+        )
+    )
+    second_derivative = np.array(
+        (
+            -radius * np.cos(angle),
+            -radius * np.sin(angle),
+            0.0,
+            -0.035 * np.sin(angle),
+            0.030 * np.cos(angle),
+            -0.160 * np.sin(2.0 * angle),
+        )
+    )
+    velocity = derivative * angle_rate
+    acceleration = second_derivative * angle_rate**2 + derivative * angle_acceleration
     return PoseReferenceSample(position, velocity, acceleration)
 
 
@@ -249,18 +280,18 @@ def payload_schedule(
         return "lift", _quintic_segment(
             time_sec, 5.0, 6.5, grasp, lifted
         ), True
-    if time_sec < 10.5:
+    if time_sec < 11.5:
         return "loaded_tracking", _loaded_trajectory(time_sec, lifted), True
-    if time_sec < 12.0:
+    if time_sec < 13.0:
         return "lower", _quintic_segment(
-            time_sec, 10.5, 12.0, lifted, grasp
+            time_sec, 11.5, 13.0, lifted, grasp
         ), True
-    if time_sec < 12.5:
+    if time_sec < 13.5:
         return "release", PoseReferenceSample(
             grasp, np.zeros(6), np.zeros(6)
         ), False
     return "retreat", _quintic_segment(
-        time_sec, 12.5, 13.5, grasp, home
+        time_sec, 13.5, 15.0, grasp, home
     ), False
 
 
@@ -292,23 +323,24 @@ def build_pose_controller(
     )
     network = TwoLayerAdaptiveNetwork(
         input_dim=42,
-        hidden_dim=28,
+        hidden_dim=120,
         output_dim=6,
-        hidden_learning_rate=0.08,
-        output_learning_rate=60.0,
-        leakage=0.01,
+        hidden_learning_rate=200.0,
+        output_learning_rate=200.0,
+        leakage=0.05,
         hidden_weight_limit=80.0,
         output_weight_limit=140.0,
         input_scale=input_scale,
         input_clip=4.0,
-        initial_hidden_scale=0.20,
+        initial_hidden_scale=0.01,
+        initial_output_scale=0.01,
         seed=seed,
     )
     parameters = PoseNACParameters.diagonal(
-        lambda_gain=(13.0, 13.0, 15.0, 10.0, 10.0, 10.0),
-        feedback_gain=(135.0, 135.0, 180.0, 24.0, 24.0, 24.0),
-        robust_gain=(0.08, 0.08, 0.10, 0.10, 0.10, 0.10),
-        ideal_weight_bound=4.0,
+        lambda_gain=(10.0, 10.0, 10.0, 10.0, 10.0, 10.0),
+        feedback_gain=(250.0, 250.0, 350.0, 50.0, 50.0, 50.0),
+        robust_gain=(0.3, 0.3, 0.3, 0.2, 0.2, 0.2),
+        ideal_weight_bound=100.0,
     )
     safety = SafetySupervisor(
         SafetyConfig(
@@ -326,7 +358,7 @@ def build_pose_mapper() -> PoseWrenchToTorque:
     """Construct running torque limits and stopping-only joint damping."""
     return PoseWrenchToTorque(
         PoseTorqueConfig.diagonal(
-            torque_limits=(140.0, 140.0, 140.0, 27.0, 27.0, 27.0),
+            torque_limits=(80.0, 80.0, 80.0, 28.0, 28.0, 28.0),
             torque_rate_limits=(
                 8000.0,
                 8000.0,
@@ -414,7 +446,9 @@ class MujocoPayloadBenchmarkRunner:
         if not all(np.all(np.isfinite(value)) for value in values):
             raise FloatingPointError("benchmark state or command contains NaN/Inf")
         limits = self.plant.joint_limits
-        tolerance = 6.0e-3
+        # Soft gripper/contact constraints can transiently exceed a nominal
+        # joint range by several milliradians at the physical 5 N effort cap.
+        tolerance = 8.0e-3
         if np.any(sample.all_joint_position < limits[:, 0] - tolerance) or np.any(
             sample.all_joint_position > limits[:, 1] + tolerance
         ):

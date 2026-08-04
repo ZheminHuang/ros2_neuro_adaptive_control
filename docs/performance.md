@@ -65,22 +65,23 @@ python3 -m pytest -q -s test/test_pose_performance.py
 
 | Statistic | Time | Equivalent serial rate |
 |---|---:|---:|
-| median | 0.146435 ms | 6829.0 Hz |
-| p95 | 0.167367 ms | 5974.9 Hz |
-| p99 | 0.229672 ms | 4354.0 Hz |
+| median | 0.159540 ms | 6268.0 Hz |
+| p95 | 0.168337 ms | 5940.5 Hz |
+| p99 | 0.186302 ms | 5367.6 Hz |
 
-The full headless ROS launch completed 6,750 controller samples and 27,000
-MuJoCo substeps for 13.5 s simulated time in 8.554 s wall time, an observed
-789.076 steps/s on this run:
+The installed headless ROS launch completed 7,500 controller samples and
+30,000 MuJoCo substeps for 15.0 s simulated time in 10.725 s wall time, an
+observed 699.319 steps/s on this run:
 
 ```bash
 ros2 launch neuro_adaptive_control payload_benchmark.launch.py \
   viewer:=false realtime:=false
 ```
 
-Across the eight committed held-out/comparison artifact trials, observed
-headless step rates ranged from 748.098 to 912.869 steps/s. These numbers show
-that the fixed-step workload met the 500 Hz target on this host. They are not
-deadline guarantees: the default viewer launch deliberately wall-paces the
-simulation, and Python, ROS 2, DDS, MuJoCo rendering, and the general-purpose
-kernel are not hard-real-time systems.
+Across the eight regenerated held-out/comparison artifact trials, every
+controller completed; observed headless rates ranged from 710.103 to
+914.004 steps/s. Exact per-trial rates remain in the machine-readable
+artifact. They are throughput observations, not deadline guarantees. The
+default viewer launch deliberately wall-paces the simulation, and Python,
+ROS 2, DDS, MuJoCo rendering, and the general-purpose kernel are not
+hard-real-time systems.

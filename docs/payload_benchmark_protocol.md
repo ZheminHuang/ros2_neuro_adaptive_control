@@ -12,10 +12,14 @@ contains only the generated animation and measured results.
   substeps.
 - The object exists from reset. Pickup does not hot-change a mass parameter;
   support transfers through physical bilateral contact.
-- Held-out cases are 0.24, 0.31, and 0.36 kg with committed COM offsets,
+- Held-out cases are 0.50, 0.75, and 1.00 kg with committed COM offsets,
   inertia scales, and deterministic seeds.
-- The schedule is unloaded 6D motion, approach, grasp, lift, loaded 6D
-  tracking, lower, release, and retreat.
+- The 15 s schedule is unloaded 6D motion, approach, grasp, 80 mm lift, one
+  smooth 40 mm-radius XY circle with bounded RX/RY/RZ excitation, lower,
+  release, and retreat. The phase law has zero velocity and acceleration at
+  the circle endpoints.
+- The gripper uses its modelled 5 N effort ceiling. Object weight, inertia,
+  collision, friction, and support transfer remain physical MuJoCo dynamics.
 
 ## Information boundary
 

@@ -26,7 +26,7 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument("controller", default_value="adaptive_nac"),
         DeclareLaunchArgument("viewer", default_value="true"),
         DeclareLaunchArgument("realtime", default_value="true"),
-        DeclareLaunchArgument("payload_mass_kg", default_value="0.31"),
+        DeclareLaunchArgument("payload_mass_kg", default_value="0.75"),
         DeclareLaunchArgument(
             "payload_com_offset_m",
             default_value="[0.004, -0.003, 0.002]",

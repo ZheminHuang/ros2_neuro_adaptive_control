@@ -141,7 +141,13 @@ network
 where
 (\widehat V\in\mathbb R^{42\times N_h}) and
 (\widehat W\in\mathbb R^{N_h\times6}). The hidden weights use a seeded,
-nonzero initialization; output weights start at zero. Define
+nonzero initialization. The reusable network defaults to zero output weights
+for backward compatibility, while the canonical payload benchmark uses
+\(N_h=120\) and initializes both \(\widehat V\) and \(\widehat W\)
+deterministically and uniformly on \([-0.01,0.01]\). Nonzero output weights
+are required here because the corrected tanh feature is cubic near the origin;
+with \(\widehat W(0)=0\), very small \(\widehat V(0)\), and strong leakage,
+both-layer learning can lose excitation before the output layer grows. Define
 
 \[
 \widehat\Sigma=\operatorname{diag}(1-\widehat\sigma_i^2).
@@ -163,6 +169,27 @@ The continuous adaptation contract is
 Both (F_0) and (F_1) are implemented as positive diagonal matrices. A
 frozen controller uses the exact checkpoint of both matrices at the first
 sustained physical payload-acquisition event.
+
+The accepted benchmark parameters are
+
+\[
+\Lambda=10I_6,\quad
+K_v=\operatorname{diag}(250,250,350,50,50,50),
+\]
+
+\[
+F_0=200I_{42},\quad F_1=200I_{120},\quad \kappa=0.05,
+\]
+
+\[
+K_Z=\operatorname{diag}(0.3,0.3,0.3,0.2,0.2,0.2),
+\quad Z_B=100.
+\]
+
+The scalar requested torque limit is intersected with the simulated robot's
+physical actuator ranges, giving
+\((80,80,80,28,28,28)\) N m. Weight projections remain software safety
+bounds, not part of the continuous UUB proof.
 
 ## v0.3 NAC command and robust term
 

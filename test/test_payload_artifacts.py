@@ -62,20 +62,20 @@ def test_payload_gate_and_readme_values_match_committed_report():
     assert metrics["adaptation_advantage_gate_passed"]
     assert metrics["adaptive_completion_ratio"] == 1.0
     assert metrics["frozen_completion_ratio"] == 1.0
-    assert "6.50 mm" in readme
-    assert "13.78 mm" in readme
-    assert "52.8% lower" in readme
-    assert "1.37 mrad" in readme
-    assert "4.92 mrad" in readme
-    assert "72.2% lower" in readme
+    assert "0.239 mm" in readme
+    assert "1.143 mm" in readme
+    assert "79.1% lower" in readme
+    assert "0.236 mrad" in readme
+    assert "1.057 mrad" in readme
+    assert "77.7% lower" in readme
 
 
 def test_showcase_images_are_real_bounded_animated_artifacts():
     assert GIF.stat().st_size <= 10 * 1024 * 1024
     with Image.open(GIF) as animation:
         assert animation.format == "GIF"
-        assert animation.size == (960, 260)
-        assert animation.n_frames >= 100
+        assert animation.size == (1280, 390)
+        assert animation.n_frames >= 120
     with Image.open(PLOT) as plot:
         assert plot.format == "PNG"
         assert plot.width >= 1600

@@ -157,8 +157,27 @@ def _report(results, metrics: dict[str, object]) -> dict[str, object]:
             "target_control_rate_hz": 500.0,
             "mujoco_timestep_sec": 0.0005,
             "substeps_per_control": 4,
+            "duration_sec": 15.0,
+            "loaded_trajectory": "one_smooth_xy_circle",
+            "loaded_circle_radius_m": 0.04,
+            "held_out_payload_mass_kg": [0.50, 0.75, 1.00],
+            "gripper_effort_n": 5.0,
             "external_wrench_mode": "none",
             "payload_parameters_visible_to_adaptive_nac": False,
+            "nac": {
+                "input_dim": 42,
+                "hidden_dim": 120,
+                "lambda_diagonal": [10.0] * 6,
+                "feedback_diagonal": [250.0, 250.0, 350.0, 50.0, 50.0, 50.0],
+                "F0_diagonal": 200.0,
+                "F1_diagonal": 200.0,
+                "kappa": 0.05,
+                "robust_diagonal": [0.3, 0.3, 0.3, 0.2, 0.2, 0.2],
+                "ideal_weight_bound": 100.0,
+                "initial_weight_scale": 0.01,
+                "both_layers_nonzero_at_reset": True,
+                "effective_torque_limits_nm": [80.0, 80.0, 80.0, 28.0, 28.0, 28.0],
+            },
             "phases": [
                 "unloaded_out",
                 "unloaded_return",
@@ -360,14 +379,17 @@ def _render_frames(result: PayloadBenchmarkResult, indices: np.ndarray) -> list:
         payload_inertia_scale=payload.inertia_scale,
     )
     plant.model.vis.headlight.active = 1
-    plant.model.vis.headlight.ambient[:] = (0.4, 0.4, 0.4)
-    plant.model.vis.headlight.diffuse[:] = (0.8, 0.8, 0.8)
-    renderer = mujoco.Renderer(plant.model, height=240, width=320)
+    plant.model.vis.headlight.ambient[:] = (0.48, 0.48, 0.48)
+    plant.model.vis.headlight.diffuse[:] = (0.86, 0.86, 0.86)
+    plant.model.vis.headlight.specular[:] = (0.25, 0.25, 0.25)
+    plant.model.vis.quality.offsamples = 4
+    plant.model.vis.quality.shadowsize = 2048
+    renderer = mujoco.Renderer(plant.model, height=360, width=480)
     camera = mujoco.MjvCamera()
-    camera.lookat[:] = np.array((-0.08, 0.40, 0.30))
-    camera.distance = 1.15
-    camera.azimuth = 135.0
-    camera.elevation = -20.0
+    camera.lookat[:] = np.array((-0.09, 0.43, 0.31))
+    camera.distance = 1.02
+    camera.azimuth = 138.0
+    camera.elevation = -18.0
     scene_option = mujoco.MjvOption()
     scene_option.geomgroup[:] = 1
     frames = []
@@ -391,12 +413,22 @@ def _draw_plot_panel(image, adaptive, nominal, index: int) -> None:
     from PIL import ImageDraw, ImageFont
 
     draw = ImageDraw.Draw(image)
-    font = ImageFont.load_default()
-    origin_x = 654
-    top = 38
-    width = 292
-    height = 82
-    draw.text((origin_x, 8), "Synchronized tracking error", fill="white", font=font)
+    try:
+        font = ImageFont.truetype("DejaVuSans.ttf", 13)
+        title_font = ImageFont.truetype("DejaVuSans-Bold.ttf", 14)
+    except OSError:
+        font = ImageFont.load_default()
+        title_font = font
+    origin_x = 980
+    top = 42
+    width = 285
+    height = 112
+    draw.text(
+        (origin_x, 12),
+        "Synchronized tracking error",
+        fill="white",
+        font=title_font,
+    )
     draw.rectangle(
         (origin_x, top, origin_x + width, top + height),
         outline=(150, 150, 150),
@@ -426,11 +458,11 @@ def _draw_plot_panel(image, adaptive, nominal, index: int) -> None:
         points = []
         for stamp, value in zip(time, values):
             x = origin_x + int(width * stamp / adaptive.time[-1])
-            y = top + height - int(height * min(float(value) / 0.08, 1.0))
+            y = top + height - int(height * min(float(value) / 0.05, 1.0))
             points.append((x, y))
-        draw.line(points, fill=color, width=2)
-    second_top = 156
-    second_height = 70
+        draw.line(points, fill=color, width=3)
+    second_top = 212
+    second_height = 105
     draw.rectangle(
         (origin_x, second_top, origin_x + width, second_top + second_height),
         outline=(150, 150, 150),
@@ -441,17 +473,32 @@ def _draw_plot_panel(image, adaptive, nominal, index: int) -> None:
         for stamp, value in zip(time, nn_values):
             x = origin_x + int(width * stamp / adaptive.time[-1])
             y = second_top + second_height - int(
-                second_height * min(float(value) / 55.0, 1.0)
+                second_height * min(float(value) / 65.0, 1.0)
             )
             points.append((x, y))
-        draw.line(points, fill=(255, 190, 60), width=2)
+        draw.line(points, fill=(255, 190, 60), width=3)
     event_time = float(adaptive.metrics["payload_acquisition_time_sec"])
     event_x = origin_x + int(width * event_time / adaptive.time[-1])
     draw.line((event_x, top, event_x, second_top + second_height), fill=(190, 90, 220))
-    draw.text((origin_x, 126), "red NAC | blue nominal | position error", fill="white")
-    draw.text((origin_x, 232), "yellow NN dynamics estimate", fill="white")
+    draw.text(
+        (origin_x, 162),
+        "red NAC | blue nominal | position error",
+        fill="white",
+        font=font,
+    )
+    draw.text(
+        (origin_x, 325),
+        "yellow NN dynamics estimate",
+        fill="white",
+        font=font,
+    )
     if adaptive.time[index] >= event_time:
-        draw.text((origin_x + 70, 142), "PAYLOAD ACQUIRED", fill=(220, 120, 255))
+        draw.text(
+            (origin_x + 55, 188),
+            "PAYLOAD ACQUIRED",
+            fill=(220, 120, 255),
+            font=title_font,
+        )
 
 
 def _write_gif(
@@ -471,18 +518,32 @@ def _write_gif(
     )
     adaptive_frames = _render_frames(adaptive, indices)
     nominal_frames = _render_frames(nominal, indices)
-    font = ImageFont.load_default()
+    try:
+        font = ImageFont.truetype("DejaVuSans.ttf", 13)
+        title_font = ImageFont.truetype("DejaVuSans-Bold.ttf", 15)
+    except OSError:
+        font = ImageFont.load_default()
+        title_font = font
     frames = []
     for output_index, history_index in enumerate(indices):
-        canvas = Image.new("RGB", (960, 260), color=(20, 22, 26))
-        canvas.paste(adaptive_frames[output_index], (0, 20))
-        canvas.paste(nominal_frames[output_index], (320, 20))
+        canvas = Image.new("RGB", (1280, 390), color=(20, 22, 26))
+        canvas.paste(adaptive_frames[output_index], (0, 30))
+        canvas.paste(nominal_frames[output_index], (480, 30))
         draw = ImageDraw.Draw(canvas)
-        draw.text((105, 5), "Adaptive NAC", fill="white", font=font)
-        draw.text((400, 5), "Nominal model-based", fill="white", font=font)
+        draw.text((185, 7), "Adaptive NAC", fill="white", font=title_font)
         draw.text(
-            (8, 244),
-            f"t={adaptive.time[history_index]:05.2f}s",
+            (635, 7),
+            "Nominal model-based",
+            fill="white",
+            font=title_font,
+        )
+        draw.text(
+            (10, 368),
+            (
+                f"t={adaptive.time[history_index]:05.2f}s | "
+                f"phase={adaptive.phase[history_index]} | "
+                f"payload={adaptive.config.payload.mass_kg:.2f} kg"
+            ),
             fill="white",
             font=font,
         )
@@ -491,7 +552,7 @@ def _write_gif(
             canvas.convert(
                 "P",
                 palette=Image.ADAPTIVE,
-                colors=128,
+                colors=192,
             )
         )
     frames[0].save(

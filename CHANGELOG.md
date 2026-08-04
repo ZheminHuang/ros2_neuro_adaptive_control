@@ -20,16 +20,21 @@ All notable changes are documented here. The project follows semantic versioning
   oracle controllers on one grasp/lift/loaded-trajectory scenario.
 - A native MuJoCo benchmark launch, aggregate acceptance gates, machine-readable
   metrics, synchronized comparison GIF, and trajectory/error/NN result plot.
+- User-selected 120-neuron NAC gains with deterministic nonzero V/W
+  initialization, heavier 0.50--1.00 kg payloads, and one smooth loaded
+  Cartesian circle before physical replacement and release.
+- Higher-resolution antialiased MuJoCo evidence rendering with a closer camera,
+  larger labels, phase/payload overlays, and increased GIF color depth.
 
 ### Candidate evidence
 
 - Three of three adaptive and frozen held-out payload trials completed without
   an added adaptive safety failure.
-- Median loaded position RMSE was 6.497 mm adaptive versus 13.779 mm frozen
-  (52.8% lower).
-- Median loaded rotation-vector RMSE was 1.368 mrad adaptive versus 4.916 mrad
-  frozen (72.2% lower).
-- The 310 g nominal baseline remains visible alongside a payload-aware oracle;
+- Median loaded position RMSE was 0.239 mm adaptive versus 1.143 mm frozen
+  (79.1% lower).
+- Median loaded rotation-vector RMSE was 0.236 mrad adaptive versus 1.057 mrad
+  frozen (77.7% lower).
+- The 0.75 kg nominal baseline remains visible alongside a payload-aware oracle;
   metric-specific results are reported without a universal superiority claim.
 
 ### Release gate

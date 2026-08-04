@@ -32,17 +32,25 @@ from neuro_adaptive_control.core.pose_neuro_adaptive_controller import (
 
 def test_schedule_is_continuous_and_excites_all_six_pose_coordinates():
     initial = np.array((-0.13, 0.49, 0.33, 0.0, 0.0, 0.0))
-    for boundary in (1.0, 2.0, 4.0, 5.0, 6.5, 10.5, 12.0, 12.5):
+    for boundary in (1.0, 2.0, 4.0, 5.0, 6.5, 11.5, 13.0, 13.5):
         left = payload_schedule(boundary - 1.0e-8, initial)[1]
         right = payload_schedule(boundary + 1.0e-8, initial)[1]
         np.testing.assert_allclose(left.position, right.position, atol=1.0e-7)
     samples = np.array(
         [
             payload_schedule(time_sec, initial)[1].position
-            for time_sec in np.linspace(6.5, 10.5, 101)
+            for time_sec in np.linspace(6.5, 11.5, 201)
         ]
     )
-    assert np.all(np.ptp(samples, axis=0) > 0.0)
+    xy = samples[:, :2]
+    circle_center = np.array((initial[0] - 0.04, initial[1]))
+    np.testing.assert_allclose(
+        np.linalg.norm(xy - circle_center, axis=1),
+        0.04,
+        atol=1.0e-12,
+    )
+    np.testing.assert_allclose(samples[0], samples[-1], atol=1.0e-12)
+    assert np.all(np.ptp(samples[:, 3:], axis=0) > 0.0)
 
 
 def test_model_free_core_has_no_mujoco_dynamics_truth_access():

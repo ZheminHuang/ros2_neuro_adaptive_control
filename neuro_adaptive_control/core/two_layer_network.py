@@ -62,6 +62,7 @@ class TwoLayerAdaptiveNetwork:
         input_scale: float | Iterable[float] = 1.0,
         input_clip: float = 5.0,
         initial_hidden_scale: float = 0.05,
+        initial_output_scale: float = 0.0,
         seed: int = 17,
         adaptation_enabled: bool = True,
     ) -> None:
@@ -82,6 +83,7 @@ class TwoLayerAdaptiveNetwork:
             ("output_weight_limit", output_weight_limit, False),
             ("input_clip", input_clip, False),
             ("initial_hidden_scale", initial_hidden_scale, False),
+            ("initial_output_scale", initial_output_scale, True),
         ):
             numeric = float(value)
             if not np.isfinite(numeric) or numeric < 0.0 or (not allow_zero and numeric == 0.0):
@@ -105,8 +107,13 @@ class TwoLayerAdaptiveNetwork:
             self.initial_hidden_scale,
             size=(self.input_dim, self.hidden_dim),
         )
+        self._initial_output = generator.uniform(
+            -self.initial_output_scale,
+            self.initial_output_scale,
+            size=(self.hidden_dim, self.output_dim),
+        )
         self.hidden_weights = self._initial_hidden.copy()
-        self.output_weights = np.zeros((self.hidden_dim, self.output_dim))
+        self.output_weights = self._initial_output.copy()
 
     @property
     def combined_weight_norm(self) -> float:
@@ -119,9 +126,9 @@ class TwoLayerAdaptiveNetwork:
         )
 
     def reset(self) -> None:
-        """Restore deterministic nondegenerate hidden weights and zero output."""
+        """Restore the deterministic configured initial weights."""
         self.hidden_weights = self._initial_hidden.copy()
-        self.output_weights.fill(0.0)
+        self.output_weights = self._initial_output.copy()
 
     def checkpoint(self) -> TwoLayerWeights:
         """Copy both adaptive layers for a frozen-controller comparison."""

@@ -117,6 +117,23 @@ def test_checkpoint_freeze_restore_and_reset_are_deterministic():
     np.testing.assert_array_equal(network.output_weights, np.zeros((2, 2)))
 
 
+def test_nonzero_output_initialization_is_seeded_and_restored_by_reset():
+    first = _network(initial_output_scale=0.01)
+    second = _network(initial_output_scale=0.01)
+    initial_hidden = first.hidden_weights.copy()
+    initial_output = first.output_weights.copy()
+
+    assert np.any(initial_output != 0.0)
+    assert np.max(np.abs(initial_output)) <= 0.01
+    np.testing.assert_array_equal(first.hidden_weights, second.hidden_weights)
+    np.testing.assert_array_equal(first.output_weights, second.output_weights)
+
+    first.update([0.4, -0.2, 0.1], [0.3, -0.1], 0.01)
+    first.reset()
+    np.testing.assert_array_equal(first.hidden_weights, initial_hidden)
+    np.testing.assert_array_equal(first.output_weights, initial_output)
+
+
 def test_invalid_shapes_nan_and_bad_checkpoint_are_rejected():
     network = _network()
     with pytest.raises(ValueError, match="features must have shape"):
@@ -125,3 +142,8 @@ def test_invalid_shapes_nan_and_bad_checkpoint_are_rejected():
         network.forward([0.0, np.nan, 0.0])
     with pytest.raises(ValueError, match="invalid shape"):
         network.restore(TwoLayerWeights(np.zeros((2, 2)), np.zeros((2, 2))))
+
+
+def test_invalid_output_initialization_scale_is_rejected():
+    with pytest.raises(ValueError, match="initial_output_scale"):
+        _network(initial_output_scale=-0.01)
