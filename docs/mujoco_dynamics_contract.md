@@ -1,9 +1,9 @@
 # MuJoCo dynamics contract
 
-This document defines the implemented boundary between the 3D
-neuro-adaptive controller, the UR5e + Robotiq MuJoCo plant, and ROS
-visualization. MuJoCo computes dynamics, constraints, collision, and contact.
-RViz consumes state and markers; it does not compute or feed back dynamics.
+This document defines the implemented boundary between the v0.3 six-DoF NAC,
+the retained legacy 3D NAC, the UR5e + Robotiq MuJoCo plant, and visualization.
+MuJoCo computes dynamics, constraints, collision, and contact. RViz or the
+native viewer only consumes state and never computes or feeds back dynamics.
 
 The common NAC equations and error signs remain authoritative in
 [math_contract.md](math_contract.md).
@@ -43,7 +43,74 @@ inverse dynamics, gravity compensation, contact model parameters, or the
 ground-truth disturbance. They receive only state, FK/Jacobian kinematics, a
 selected measured external force, and configured feedback/limit values.
 
-## Robot RBF input and 3D NAC output
+The v0.3 payload benchmark fixes the NAC external wrench to zero. Its
+controller observation is limited to the six arm positions and velocities,
+TCP pose and twist, desired/impedance state, and geometric Jacobian. The
+physical payload case, contact state, acquisition schedule, object identifier,
+body mass, COM, inertia, `qM`, and `qfrc_bias` are not passed to the adaptive
+controller. Contact is used only for safety/metrics and to freeze the explicit
+comparison controller at the observed pickup event.
+
+## v0.3 analytical state and torque path
+
+Reset captures (R_0). Each coherent MuJoCo sample is converted to
+
+\[
+\rho=\operatorname{Log}(RR_0^T)^\vee,\qquad
+\dot\rho=J_l^{-1}(\rho)\omega.
+\]
+
+The six-dimensional geometric Jacobian is
+
+\[
+J_g=\begin{bmatrix}J_v\\J_\omega\end{bmatrix},
+\]
+
+and the adapter forms
+
+\[
+\mathcal E=\operatorname{blkdiag}(I_3,J_l(\rho)),\qquad
+J_a=\mathcal E^{-1}J_g.
+\]
+
+For the analytical NAC output (u_c\in\mathbb R^6), the adapter computes
+
+\[
+w_c=\mathcal E^{-T}u_c,
+\]
+
+\[
+\boxed{\tau_{raw}=J_g^Tw_c=J_a^Tu_c}.
+\]
+
+The two forms are tested numerically for equality and virtual-work
+consistency. There is no extra orientation PD or running joint damping in this
+path. Torque-rate and absolute-torque limits are applied after the mapping.
+Only stopping/fault handling may replace the command with bounded
+(-D_{q,safe}\dot q).
+
+## Physical payload acquisition
+
+The free object is present from the first physics step and initially rests on
+the table. A payload case changes the MuJoCo body's mass, inertial-frame COM,
+and diagonal inertia before reset; `mj_setConst` recomputes model constants.
+No mass is hot-switched at pickup. The dynamics change seen by the arm occurs
+naturally when bilateral finger contact lifts the object and support transfers
+from the table to the articulated gripper.
+
+The canonical event requires both left and right finger contact plus at least
+12 mm object lift. This event is logged for every controller. It disables both
+V and W updates only for `frozen_at_payload`; adaptive NAC does not consume the
+event. The nominal model-based baseline knows the bundled robot/gripper model
+but not the payload. The oracle baseline adds known payload gravity/COM
+compensation after acquisition and is reported as an upper reference.
+
+The common 13.5 s scenario contains unloaded 6D motion, approach, close, lift,
+loaded 6D tracking, lower, release, and retreat. All variants share reference,
+payload, controller period, four physics substeps, actuator limits, camera,
+and safety checks.
+
+## Legacy v0.2 robot RBF input and 3D output
 
 The robot controller is instantiated with a twelve-element dynamics context
 and a 27D RBF input:
@@ -70,7 +137,7 @@ and 140 N, then a 180 N Euclidean-norm limit. Cartesian limiting does not by
 itself restore the pre-update weights; the downstream joint-limit rule is
 specified below.
 
-## Independent orientation hold and joint damping
+## Legacy v0.2 orientation hold and joint damping
 
 Reset captures a fixed desired TCP orientation \(R_d\). Both \(R\) and \(R_d\)
 map TCP-frame vectors into the base frame. The local desired-minus-actual
@@ -96,7 +163,7 @@ The geodesic distance
 is checked separately because the local `vee` error degenerates near 180
 degrees. The configured orientation guard is 35 degrees.
 
-The unbounded arm command is
+The legacy unbounded arm command is
 
 \[
 \boxed{\tau_{raw}=J_v^{B\,T}f_c^B
@@ -109,7 +176,7 @@ degrees of freedom that the translation-only NAC does not control; it is not
 a learned or validated 6D NAC and can couple into translation through the
 actual robot dynamics.
 
-Current diagonal defaults are:
+These legacy defaults are:
 
 | Quantity | Values |
 |---|---|

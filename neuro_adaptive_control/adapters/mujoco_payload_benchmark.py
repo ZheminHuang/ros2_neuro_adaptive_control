@@ -18,8 +18,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from time import perf_counter_ns
-from typing import Dict
+from typing import Callable, Dict
 
 import numpy as np
 
@@ -346,10 +347,16 @@ def _rmse_norm(error: np.ndarray) -> float:
 class MujocoPayloadBenchmarkRunner:
     """Own one plant and run one controller through the canonical schedule."""
 
-    def __init__(self, config: PayloadBenchmarkConfig) -> None:
+    def __init__(
+        self,
+        config: PayloadBenchmarkConfig,
+        *,
+        model_path: str | Path | None = None,
+    ) -> None:
         self.config = config
         payload = config.payload
         self.plant = MujocoUR5ePlant(
+            model_path=model_path,
             seed=payload.seed,
             payload_mass_kg=payload.mass_kg,
             payload_com_offset_m=payload.com_offset_m,
@@ -369,6 +376,7 @@ class MujocoPayloadBenchmarkRunner:
             else None
         )
         self.model_controller = MujocoModelBasedController(
+            model_path=model_path,
             oracle_payload_mass_kg=oracle_mass
         )
         self.state = SimulationState.START
@@ -432,7 +440,10 @@ class MujocoPayloadBenchmarkRunner:
                 f"object={sample.object_position.tolist()})"
             )
 
-    def run(self) -> PayloadBenchmarkResult:
+    def run(
+        self,
+        step_callback: Callable[[int, str], None] | None = None,
+    ) -> PayloadBenchmarkResult:
         """Execute one deterministic controller/payload trial."""
         if self.state != SimulationState.START:
             raise RuntimeError("payload benchmark runner must be fresh")
@@ -562,6 +573,8 @@ class MujocoPayloadBenchmarkRunner:
             object_history[index] = next_sample.object_position
             qpos_history[index] = self.plant.data.qpos
             phases.append(phase)
+            if step_callback is not None:
+                step_callback(index, phase)
         wall_duration = (perf_counter_ns() - wall_start) * 1.0e-9
         self.state = SimulationState.STOPPING
         self._safe_hold()

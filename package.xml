@@ -2,8 +2,8 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>neuro_adaptive_control</name>
-  <version>0.2.0</version>
-  <description>Model-free 3D Cartesian neuro-adaptive impedance control with deterministic and MuJoCo robot demos.</description>
+  <version>0.3.0</version>
+  <description>Model-free six-DoF neuro-adaptive impedance tracking with unknown-payload MuJoCo benchmarks.</description>
   <maintainer email="zheminhuang@users.noreply.github.com">Zhemin Huang</maintainer>
   <license>Apache-2.0</license>
 
@@ -26,6 +26,7 @@
   <exec_depend>xacro</exec_depend>
   <exec_depend>python3-matplotlib</exec_depend>
   <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-pil</exec_depend>
   <exec_depend>ros2launch</exec_depend>
 
   <test_depend>ament_copyright</test_depend>

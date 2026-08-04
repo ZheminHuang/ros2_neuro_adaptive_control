@@ -3,12 +3,16 @@
 
 name: ROS 2 Humble CI
 
+env:
+  ROS_LOG_DIR: /tmp/ros2_neuro_adaptive_control_ci_logs
+  MPLCONFIGDIR: /tmp/ros2_neuro_adaptive_control_matplotlib
+
 permissions:
   contents: read
 
 on:
   push:
-    branches: [main, feature/ur5e-robotiq-mujoco]
+    branches: [main, feature/6d-nac-payload-benchmark]
     tags: ["v*"]
   pull_request:
     branches: [main]
@@ -27,6 +31,7 @@ jobs:
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
             python3-numpy \
+            python3-pil \
             python3-pip \
             python3-pytest \
             ros-humble-control-msgs \

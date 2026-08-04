@@ -11,7 +11,7 @@ package_name = "neuro_adaptive_control"
 
 setup(
     name=package_name,
-    version="0.2.0",
+    version="0.3.0",
     packages=find_packages(exclude=("test",)),
     data_files=[
         (
@@ -44,12 +44,12 @@ setup(
     maintainer="Zhemin Huang",
     maintainer_email="zheminhuang@users.noreply.github.com",
     description=(
-        "Model-free 3D Cartesian neuro-adaptive impedance trajectory "
-        "tracking for ROS 2."
+        "Model-free six-DoF neuro-adaptive impedance tracking with "
+        "unknown-payload MuJoCo benchmarks for ROS 2."
     ),
     license="Apache-2.0",
     extras_require={
-        "plot": ["matplotlib>=3.5"],
+        "plot": ["matplotlib>=3.5", "Pillow>=9.0"],
         "mujoco": ["numpy==1.24.4", "mujoco==3.9.0"],
         "test": ["pytest"],
     },
@@ -76,6 +76,10 @@ setup(
             (
                 "mujoco_rviz_bridge = "
                 "neuro_adaptive_control.nodes.mujoco_rviz_bridge:main"
+            ),
+            (
+                "payload_benchmark_node = "
+                "neuro_adaptive_control.nodes.payload_benchmark_node:main"
             ),
         ],
     },

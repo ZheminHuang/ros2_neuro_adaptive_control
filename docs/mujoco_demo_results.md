@@ -1,9 +1,9 @@
-# MuJoCo v0.2.0-candidate results
+# Legacy v0.2 MuJoCo compatibility results
 
 This page records the committed, machine-readable evidence for the
-full-dynamics UR5e + Robotiq candidate. Values below are transcribed from the
-linked JSON files; terminal output and RViz appearance are not used as metric
-sources.
+full-dynamics UR5e + Robotiq scenarios, regenerated unchanged by the v0.3
+candidate. Values below are transcribed from the linked JSON files; terminal
+output and RViz appearance are not used as metric sources.
 
 ## Environment and traceability
 
@@ -11,7 +11,7 @@ Both reports identify:
 
 | Field | Value |
 |---|---|
-| package candidate | 0.2.0 |
+| package candidate | 0.3.0 |
 | Python environment | ROS 2 Humble system Python |
 | Python | 3.10.12 |
 | NumPy | 1.24.4 |
@@ -29,9 +29,9 @@ history hashes.
 Artifacts:
 
 - [JSON](assets/mujoco_tracking_benchmark.json), SHA-256
-  `277793b062a0197ad7b64a815b63797de5b3ce1bae0eccc2c9fd67804e5cd6a8`;
+  `72a1b0c8e85d4c32511e8eca73542dcc05ce8147ccdbb9887f071f2fe650a06e`;
 - [PNG](assets/mujoco_tracking_benchmark.png), SHA-256
-  `aabe4f74ea6d910a22ad948fb6d36a4e63f2bc61db7f69de3b44b3e5bde230ef`;
+  `625ffabf5c8cf980b29152007dbce9cd20cc1558114e00338fc114eb6fdc0719`;
 - generator: `examples/run_mujoco_benchmark.py`;
 - runner: `neuro_adaptive_control/adapters/mujoco_simulation.py`.
 
@@ -91,7 +91,7 @@ the frozen baseline history is
 Artifacts:
 
 - [JSON](assets/mujoco_grasp_benchmark.json), SHA-256
-  `35e9e69818abb1d39d9c10c207621e3ccd945431aab5d4175d1a4c591b15888b`;
+  `16d456a73e3cbd97a3d7b920e3699742f545833b4674463f0ccd7238efd1e6e7`;
 - [PNG](assets/mujoco_grasp_benchmark.png), SHA-256
   `52d3921985c1dd85d225f9b3ae9a31b8a1ff7be0698dca14704089d27296a9bd`;
 - generator: `examples/run_mujoco_grasp.py`;

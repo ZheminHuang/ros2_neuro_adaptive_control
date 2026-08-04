@@ -1,0 +1,380 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "six_dof_unknown_payload_benchmark",
+  "traceability": {
+    "generator": "examples/run_payload_benchmark.py",
+    "generator_sha256": "5983c47223e5d29a7180efef8569db8f9d905f73850e9067ef4ff2a14e87db5f",
+    "runner": "neuro_adaptive_control/adapters/mujoco_payload_benchmark.py",
+    "runner_sha256": "1235709f63845d69d12ac4a3ef9e70812fd40d41bc2904091af7108abbee044a",
+    "source_files_sha256": {
+      "neuro_adaptive_control/adapters/mujoco_payload_benchmark.py": "1235709f63845d69d12ac4a3ef9e70812fd40d41bc2904091af7108abbee044a",
+      "neuro_adaptive_control/adapters/model_based_controller.py": "09444285f17d65ef0bffb1eaa0216dc5b087fd8f11dd4f0ee2d764d266c5cf0b",
+      "neuro_adaptive_control/adapters/mujoco_ur5e_adapter.py": "d9bfdccb92d0864cf0afba71f2846c03e5991ff426559b2b49d9fe01b1fbf930",
+      "neuro_adaptive_control/adapters/pose_wrench_to_torque.py": "a7653d86d02ba2392ea3c85e31dd9031b2ea70d2eecfd7a4f6facb855d6b51c3",
+      "neuro_adaptive_control/core/pose_impedance_model.py": "5b28a6d67a3c25fbf1779717ccc954f18ee051b17ddd6ab758bcfa3a31c5329e",
+      "neuro_adaptive_control/core/pose_neuro_adaptive_controller.py": "1c29d2fa642c8571ac753e8fc50b8237ac0c4107f8afa04a5643cfd785b9fc13",
+      "neuro_adaptive_control/core/so3.py": "d3f0cebbbb8ff9bc7a08f37c284dad6a5c17edfdb5b057f65c1bb6048d3f0dd5",
+      "neuro_adaptive_control/core/two_layer_network.py": "e0e448eba0b31b2527bd138c80e4df7d59fcae52dd95d7c98a3a89fe5c3cc781"
+    },
+    "model": "mujoco/ur5e_robotiq_2f85.xml",
+    "model_sha256": "24c8d1318feb78e0319d24bcbb6f768820b85026c64c86b19a9b2d2decab8ce6",
+    "package_version": "0.3.0",
+    "python_version": "3.10.12",
+    "numpy_version": "1.24.4",
+    "mujoco_version": "3.9.0"
+  },
+  "scenario": {
+    "target_control_rate_hz": 500.0,
+    "mujoco_timestep_sec": 0.0005,
+    "substeps_per_control": 4,
+    "external_wrench_mode": "none",
+    "payload_parameters_visible_to_adaptive_nac": false,
+    "phases": [
+      "unloaded_out",
+      "unloaded_return",
+      "approach",
+      "grasp",
+      "lift",
+      "loaded_tracking",
+      "lower",
+      "release",
+      "retreat"
+    ]
+  },
+  "aggregate_adaptation_gate": {
+    "payload_pair_count": 3,
+    "adaptive_completion_ratio": 1.0,
+    "frozen_completion_ratio": 1.0,
+    "median_adaptive_loaded_position_rmse_m": 0.006497353487257998,
+    "median_frozen_loaded_position_rmse_m": 0.013779272524745709,
+    "median_loaded_position_improvement_ratio": 0.5284690483050081,
+    "median_adaptive_loaded_orientation_rmse_rad": 0.0013684890718953676,
+    "median_frozen_loaded_orientation_rmse_rad": 0.0049161123422067805,
+    "median_loaded_orientation_improvement_ratio": 0.7216318552881015,
+    "no_extra_adaptive_safety_failures": true,
+    "adaptation_advantage_gate_passed": true
+  },
+  "showcase_dynamics_change": {
+    "adaptive_loaded_position_rmse_m": 0.011528920811143718,
+    "adaptive_loaded_orientation_rmse_rad": 0.0023184727405320595,
+    "nominal_loaded_position_rmse_m": 0.009613201413389817,
+    "nominal_loaded_orientation_rmse_rad": 0.05733659825595238,
+    "nominal_position_rmse_loaded_to_unloaded_ratio": 5.75215560192736,
+    "nominal_orientation_rmse_loaded_to_unloaded_ratio": 2.572189412896549
+  },
+  "trials": [
+    {
+      "controller": "adaptive_nac",
+      "payload": {
+        "name": "light_240g",
+        "mass_kg": 0.24,
+        "com_offset_m": [
+          -0.003,
+          0.002,
+          0.0
+        ],
+        "inertia_scale": 0.9,
+        "seed": 53
+      },
+      "metrics": {
+        "controller": "adaptive_nac",
+        "payload_case": "light_240g",
+        "success": true,
+        "state": "stopped",
+        "payload_acquired": true,
+        "payload_acquisition_time_sec": 5.541999999999648,
+        "loaded_position_rmse_m": 0.005109366671612419,
+        "loaded_position_max_error_m": 0.008677679840687102,
+        "loaded_orientation_rmse_rad": 0.0013684890718953676,
+        "loaded_orientation_max_error_rad": 0.0019498215838253433,
+        "unloaded_position_rmse_m": 0.016367074932329112,
+        "unloaded_orientation_rmse_rad": 0.008318774024142737,
+        "loaded_bilateral_contact_ratio": 1.0,
+        "maximum_contact_force_n": 154.35119094499674,
+        "maximum_arm_torque_abs_nm": 25.315936850383434,
+        "maximum_neural_estimate_norm": 47.51060547043003,
+        "final_combined_weight_norm": 27.48633422949801,
+        "torque_saturation_count": 0,
+        "simulated_duration_sec": 13.500000000005008,
+        "wall_duration_sec": 8.603794137000001,
+        "observed_step_rate_hz": 784.5375996355036,
+        "fault_reason": ""
+      },
+      "deterministic_history_sha256": "aecc5ec2b5300a441227234b8093acf155baae77b8a9ec14a63ecc27753e71eb"
+    },
+    {
+      "controller": "frozen_at_payload",
+      "payload": {
+        "name": "light_240g",
+        "mass_kg": 0.24,
+        "com_offset_m": [
+          -0.003,
+          0.002,
+          0.0
+        ],
+        "inertia_scale": 0.9,
+        "seed": 53
+      },
+      "metrics": {
+        "controller": "frozen_at_payload",
+        "payload_case": "light_240g",
+        "success": true,
+        "state": "stopped",
+        "payload_acquired": true,
+        "payload_acquisition_time_sec": 5.541999999999648,
+        "loaded_position_rmse_m": 0.011159082731998261,
+        "loaded_position_max_error_m": 0.011670378569361206,
+        "loaded_orientation_rmse_rad": 0.004546862585298149,
+        "loaded_orientation_max_error_rad": 0.008349581124392028,
+        "unloaded_position_rmse_m": 0.016367074932329112,
+        "unloaded_orientation_rmse_rad": 0.008318774024142737,
+        "loaded_bilateral_contact_ratio": 1.0,
+        "maximum_contact_force_n": 154.35119094499674,
+        "maximum_arm_torque_abs_nm": 25.315936850383434,
+        "maximum_neural_estimate_norm": 20.005209793525395,
+        "final_combined_weight_norm": 14.604426021769513,
+        "torque_saturation_count": 0,
+        "simulated_duration_sec": 13.500000000005008,
+        "wall_duration_sec": 8.578319802000001,
+        "observed_step_rate_hz": 786.8673768056846,
+        "fault_reason": ""
+      },
+      "deterministic_history_sha256": "c8749f9f31533700977bae1190afb16fcc3beb070bfc4ff585a6044dfa419f63"
+    },
+    {
+      "controller": "adaptive_nac",
+      "payload": {
+        "name": "showcase_310g_offset",
+        "mass_kg": 0.31,
+        "com_offset_m": [
+          0.004,
+          -0.003,
+          0.002
+        ],
+        "inertia_scale": 1.15,
+        "seed": 41
+      },
+      "metrics": {
+        "controller": "adaptive_nac",
+        "payload_case": "showcase_310g_offset",
+        "success": true,
+        "state": "stopped",
+        "payload_acquired": true,
+        "payload_acquisition_time_sec": 5.567999999999634,
+        "loaded_position_rmse_m": 0.011528920811143718,
+        "loaded_position_max_error_m": 0.01591372231321738,
+        "loaded_orientation_rmse_rad": 0.0023184727405320595,
+        "loaded_orientation_max_error_rad": 0.003120855627529902,
+        "unloaded_position_rmse_m": 0.016857766054153636,
+        "unloaded_orientation_rmse_rad": 0.010149281915933889,
+        "loaded_bilateral_contact_ratio": 1.0,
+        "maximum_contact_force_n": 159.54674866833594,
+        "maximum_arm_torque_abs_nm": 25.30987877550939,
+        "maximum_neural_estimate_norm": 45.356215347625636,
+        "final_combined_weight_norm": 23.839479999289285,
+        "torque_saturation_count": 0,
+        "simulated_duration_sec": 13.500000000005008,
+        "wall_duration_sec": 8.446150502,
+        "observed_step_rate_hz": 799.1806442948937,
+        "fault_reason": ""
+      },
+      "deterministic_history_sha256": "ac8e070cb2ed10391c0d94fa9daecb775dde7c402fb06dee895a27db0e1e51cb"
+    },
+    {
+      "controller": "frozen_at_payload",
+      "payload": {
+        "name": "showcase_310g_offset",
+        "mass_kg": 0.31,
+        "com_offset_m": [
+          0.004,
+          -0.003,
+          0.002
+        ],
+        "inertia_scale": 1.15,
+        "seed": 41
+      },
+      "metrics": {
+        "controller": "frozen_at_payload",
+        "payload_case": "showcase_310g_offset",
+        "success": true,
+        "state": "stopped",
+        "payload_acquired": true,
+        "payload_acquisition_time_sec": 5.567999999999634,
+        "loaded_position_rmse_m": 0.01696021842518231,
+        "loaded_position_max_error_m": 0.017378028003497973,
+        "loaded_orientation_rmse_rad": 0.008432102180094244,
+        "loaded_orientation_max_error_rad": 0.012855071200931845,
+        "unloaded_position_rmse_m": 0.016857766054153636,
+        "unloaded_orientation_rmse_rad": 0.010149281915933889,
+        "loaded_bilateral_contact_ratio": 1.0,
+        "maximum_contact_force_n": 159.54674866833594,
+        "maximum_arm_torque_abs_nm": 25.30987877550939,
+        "maximum_neural_estimate_norm": 4.88551905485823,
+        "final_combined_weight_norm": 5.620525982897594,
+        "torque_saturation_count": 0,
+        "simulated_duration_sec": 13.500000000005008,
+        "wall_duration_sec": 8.377269457,
+        "observed_step_rate_hz": 805.7518066772625,
+        "fault_reason": ""
+      },
+      "deterministic_history_sha256": "119a30650e75f59e881b252b7fe766cfecddefae183cafc535ff0bae7a8d0849"
+    },
+    {
+      "controller": "adaptive_nac",
+      "payload": {
+        "name": "heavy_360g",
+        "mass_kg": 0.36,
+        "com_offset_m": [
+          0.005,
+          0.004,
+          0.003
+        ],
+        "inertia_scale": 1.25,
+        "seed": 67
+      },
+      "metrics": {
+        "controller": "adaptive_nac",
+        "payload_case": "heavy_360g",
+        "success": true,
+        "state": "stopped",
+        "payload_acquired": true,
+        "payload_acquisition_time_sec": 5.5539999999996414,
+        "loaded_position_rmse_m": 0.006497353487257998,
+        "loaded_position_max_error_m": 0.011258092487733799,
+        "loaded_orientation_rmse_rad": 0.0013086498156633958,
+        "loaded_orientation_max_error_rad": 0.0018558124962140786,
+        "unloaded_position_rmse_m": 0.016608771579180764,
+        "unloaded_orientation_rmse_rad": 0.00915285963418222,
+        "loaded_bilateral_contact_ratio": 1.0,
+        "maximum_contact_force_n": 161.24014680431802,
+        "maximum_arm_torque_abs_nm": 25.31391475574447,
+        "maximum_neural_estimate_norm": 48.39875343329007,
+        "final_combined_weight_norm": 23.872223420582113,
+        "torque_saturation_count": 0,
+        "simulated_duration_sec": 13.500000000005008,
+        "wall_duration_sec": 9.022881498,
+        "observed_step_rate_hz": 748.09804401135,
+        "fault_reason": ""
+      },
+      "deterministic_history_sha256": "d1ca555ab152a005f831855994bb466b795dd716a8cd1623aeaccb522d202891"
+    },
+    {
+      "controller": "frozen_at_payload",
+      "payload": {
+        "name": "heavy_360g",
+        "mass_kg": 0.36,
+        "com_offset_m": [
+          0.005,
+          0.004,
+          0.003
+        ],
+        "inertia_scale": 1.25,
+        "seed": 67
+      },
+      "metrics": {
+        "controller": "frozen_at_payload",
+        "payload_case": "heavy_360g",
+        "success": true,
+        "state": "stopped",
+        "payload_acquired": true,
+        "payload_acquisition_time_sec": 5.5539999999996414,
+        "loaded_position_rmse_m": 0.013779272524745709,
+        "loaded_position_max_error_m": 0.014271929093426382,
+        "loaded_orientation_rmse_rad": 0.0049161123422067805,
+        "loaded_orientation_max_error_rad": 0.008903933160702425,
+        "unloaded_position_rmse_m": 0.016608771579180764,
+        "unloaded_orientation_rmse_rad": 0.00915285963418222,
+        "loaded_bilateral_contact_ratio": 1.0,
+        "maximum_contact_force_n": 161.24014680431802,
+        "maximum_arm_torque_abs_nm": 25.31391475574447,
+        "maximum_neural_estimate_norm": 14.253338579214967,
+        "final_combined_weight_norm": 9.711260004941318,
+        "torque_saturation_count": 0,
+        "simulated_duration_sec": 13.500000000005008,
+        "wall_duration_sec": 8.839329424,
+        "observed_step_rate_hz": 763.6325875210417,
+        "fault_reason": ""
+      },
+      "deterministic_history_sha256": "57a6db532ab273c22b68048bdae299153ab393d56855ad2726d6595ca6613d90"
+    },
+    {
+      "controller": "nominal_model_based",
+      "payload": {
+        "name": "showcase_310g_offset",
+        "mass_kg": 0.31,
+        "com_offset_m": [
+          0.004,
+          -0.003,
+          0.002
+        ],
+        "inertia_scale": 1.15,
+        "seed": 41
+      },
+      "metrics": {
+        "controller": "nominal_model_based",
+        "payload_case": "showcase_310g_offset",
+        "success": true,
+        "state": "stopped",
+        "payload_acquired": true,
+        "payload_acquisition_time_sec": 5.641999999999593,
+        "loaded_position_rmse_m": 0.009613201413389817,
+        "loaded_position_max_error_m": 0.010534013335370344,
+        "loaded_orientation_rmse_rad": 0.05733659825595238,
+        "loaded_orientation_max_error_rad": 0.07606957464406895,
+        "unloaded_position_rmse_m": 0.0016712345907625911,
+        "unloaded_orientation_rmse_rad": 0.02229097047382117,
+        "loaded_bilateral_contact_ratio": 1.0,
+        "maximum_contact_force_n": 165.26541793083794,
+        "maximum_arm_torque_abs_nm": 24.025459230977877,
+        "maximum_neural_estimate_norm": 0.0,
+        "final_combined_weight_norm": 3.944179018700839,
+        "torque_saturation_count": 0,
+        "simulated_duration_sec": 13.500000000005008,
+        "wall_duration_sec": 7.394266201000001,
+        "observed_step_rate_hz": 912.8694878590021,
+        "fault_reason": ""
+      },
+      "deterministic_history_sha256": "8bf0b245d50400ba058e5070f1aad1fec7958781ccaede77d536c740741323e8"
+    },
+    {
+      "controller": "oracle_model_based",
+      "payload": {
+        "name": "showcase_310g_offset",
+        "mass_kg": 0.31,
+        "com_offset_m": [
+          0.004,
+          -0.003,
+          0.002
+        ],
+        "inertia_scale": 1.15,
+        "seed": 41
+      },
+      "metrics": {
+        "controller": "oracle_model_based",
+        "payload_case": "showcase_310g_offset",
+        "success": true,
+        "state": "stopped",
+        "payload_acquired": true,
+        "payload_acquisition_time_sec": 5.641999999999593,
+        "loaded_position_rmse_m": 0.0014344378021631903,
+        "loaded_position_max_error_m": 0.001935433871496021,
+        "loaded_orientation_rmse_rad": 0.02280725866732071,
+        "loaded_orientation_max_error_rad": 0.030043444376346564,
+        "unloaded_position_rmse_m": 0.0016712345907625911,
+        "unloaded_orientation_rmse_rad": 0.02229097047382117,
+        "loaded_bilateral_contact_ratio": 1.0,
+        "maximum_contact_force_n": 165.26541793083794,
+        "maximum_arm_torque_abs_nm": 24.722325652871028,
+        "maximum_neural_estimate_norm": 0.0,
+        "final_combined_weight_norm": 3.944179018700839,
+        "torque_saturation_count": 0,
+        "simulated_duration_sec": 13.500000000005008,
+        "wall_duration_sec": 7.493814766000001,
+        "observed_step_rate_hz": 900.7428406991397,
+        "fault_reason": ""
+      },
+      "deterministic_history_sha256": "a4f246007b81c344266e669a251367b1cb62fbb0590b4916b8e13e45aec126a7"
+    }
+  ],
+  "claim_scope": "Empirical deterministic MuJoCo evidence for these held-out payloads; no hard-real-time or universal superiority claim."
+}

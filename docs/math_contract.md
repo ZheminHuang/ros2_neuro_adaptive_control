@@ -1,34 +1,245 @@
 # Mathematical contract
 
-This document fixes the signs, dimensions, approximation model, and discrete
-implementation shared by the v0.1 Cartesian demo and the v0.2 MuJoCo feature
-branch. Robot-specific dynamics and frame details are defined in
+This document fixes the signs, dimensions, approximation models, and discrete
+implementation for the v0.3 six-DoF candidate and the retained v0.1/v0.2 3D
+APIs. Robot-specific dynamics and frame details are defined in
 [mujoco_dynamics_contract.md](mujoco_dynamics_contract.md).
 
 ## Scope and meaning of model-free
 
-The controller is designed around an unknown translational Cartesian plant
+The v0.3 controller is designed around unknown analytical Cartesian dynamics
 
 \[
-M_C(q)\ddot x+C_C(q,\dot q)\dot x+F_C(q,\dot q)+G_C(q)
-=f_c+K_h f_{ext},\qquad x,f_c,f_{ext}\in\mathbb R^3.
+M_C(q,x)\ddot x+C_C(q,\dot q,x,\dot x)\dot x+F_C(q,\dot q)+G_C(q)
+=u_c+h,\qquad x,u_c,h\in\mathbb R^6.
 \]
 
-*Model-free* means that the NAC and its force-to-torque mapper do not read or
+*Model-free* means the NAC and its torque mapper do not read or
 evaluate the plant mass matrix, Coriolis term, friction, gravity term, MuJoCo
-`qM`, `qfrc_bias`, contact parameters, or a ground-truth disturbance. MuJoCo
-necessarily owns those quantities to simulate the plant, but they are not NAC
-inputs.
+`qM`, `qfrc_bias`, payload mass/COM/inertia, contact parameters, schedule
+truth, or a ground-truth disturbance. MuJoCo owns those quantities to simulate
+the plant, but they are not NAC inputs. Nominal and oracle model-based
+benchmark controllers are separate classes and are never used inside the NAC.
 
 The controller still requires measured or estimated joint state, forward
 kinematics, a geometric Jacobian, Cartesian pose and twist, frame transforms,
 and a robot-specific command mapping. These are kinematics and measurements,
 not known rigid-body dynamics.
 
-The adaptive controller produces a **three-dimensional translational force**.
-The MuJoCo adapter adds an independent, non-adaptive orientation-hold moment
-and joint damping. That auxiliary control does not turn the NAC into a
-validated 6D controller.
+The legacy v0.1/v0.2 controller remains a separate 3D Gaussian-RBF mode. Its
+old orientation-hold and running joint-damping mapper is retained only for
+backward compatibility. It is not used by the v0.3 benchmark.
+
+## v0.3 six-DoF coordinate contract
+
+Let (R_0\in SO(3)) be the TCP orientation captured at reset. The analytical
+pose is
+
+\[
+x=\begin{bmatrix}p\\\rho\end{bmatrix},\qquad
+\rho=\operatorname{Log}(RR_0^T)^\vee.
+\]
+
+The implementation stays in the principal chart
+(\lVert\rho\rVert\le\pi-\delta). It rejects the configured branch boundary,
+invalid rotation matrices, NaN, and Inf. For
+(\theta=\lVert\rho\rVert),
+
+\[
+J_l(\rho)=I+\frac{1-\cos\theta}{\theta^2}\rho^\wedge
++\frac{\theta-\sin\theta}{\theta^3}(\rho^\wedge)^2,
+\]
+
+\[
+J_l^{-1}(\rho)=I-\frac12\rho^\wedge+
+\left[\frac1{\theta^2}-\frac{1+\cos\theta}{2\theta\sin\theta}\right]
+(\rho^\wedge)^2.
+\]
+
+Small-angle series are used at zero. Spatial angular velocity and analytical
+rotation-vector rate obey
+
+\[
+\omega=(\dot RR^T)^\vee=J_l(\rho)\dot\rho.
+\]
+
+With
+
+\[
+\mathcal E(\rho)=\operatorname{blkdiag}(I_3,J_l(\rho)),
+\]
+
+the geometric twist and analytical velocity satisfy
+
+\[
+\mathcal V=\mathcal E\dot x=J_g(q)\dot q,\qquad
+J_a=\mathcal E^{-1}J_g.
+\]
+
+All velocities, Jacobians, forces, and moments use the MuJoCo world/base frame
+and the same `gripper_pinch` point.
+
+## v0.3 impedance and filtered error
+
+The prescribed six-dimensional response is
+
+\[
+M_m\ddot x_m+D_m\dot x_m+K_mx_m=K_hh+f_a(x_d),
+\]
+
+\[
+f_a=M_m\ddot x_d+D_m\dot x_d+K_mx_d.
+\]
+
+The rotational entries of (x_m) and (x_d) are rotation-vector
+coordinates, not roll/pitch/yaw Euler angles. The signs are fixed as
+
+\[
+e_m=x_m-x,\qquad \dot e_m=\dot x_m-\dot x,\qquad
+r=\dot e_m+\Lambda e_m.
+\]
+
+Substitution into the unknown dynamics collects
+
+\[
+\mathcal G(z)=M_C(\ddot x_m+\Lambda\dot e_m)
++C_C(\dot x_m+\Lambda e_m)+F_C+G_C
+\]
+
+and gives
+
+\[
+M_C\dot r=-C_Cr+\mathcal G(z)-u_c-h.
+\]
+
+Changing the error sign requires changing all dependent feedback, robust, and
+adaptation signs.
+
+## v0.3 42D two-layer network
+
+The exact regressor ordering is
+
+\[
+z=\operatorname{col}(q_6,\dot q_6,x_m,\dot x_m,\ddot x_m,e_m,\dot e_m)
+\in\mathbb R^{42}.
+\]
+
+Every block has six elements. The implementation first forms
+
+\[
+\bar z_j=\operatorname{clip}(z_j/s_j,-4,4)
+\]
+
+using the committed per-field scales, then evaluates the bias-free tanh
+network
+
+\[
+\widehat{\mathcal G}=\widehat W^T\widehat\sigma,\qquad
+\widehat\sigma=\tanh(\widehat V^T\bar z),
+\]
+
+where
+(\widehat V\in\mathbb R^{42\times N_h}) and
+(\widehat W\in\mathbb R^{N_h\times6}). The hidden weights use a seeded,
+nonzero initialization; output weights start at zero. Define
+
+\[
+\widehat\Sigma=\operatorname{diag}(1-\widehat\sigma_i^2).
+\]
+
+The continuous adaptation contract is
+
+\[
+\dot{\widehat W}=F_1
+(\widehat\sigma-\widehat\Sigma\widehat V^T\bar z)r^T
+-\kappa F_1\lVert r\rVert\widehat W,
+\]
+
+\[
+\dot{\widehat V}=F_0\bar z r^T\widehat W^T\widehat\Sigma
+-\kappa F_0\lVert r\rVert\widehat V.
+\]
+
+Both (F_0) and (F_1) are implemented as positive diagonal matrices. A
+frozen controller uses the exact checkpoint of both matrices at the first
+sustained physical payload-acquisition event.
+
+## v0.3 NAC command and robust term
+
+Let
+
+\[
+\lVert\widehat Z\rVert_F=
+\sqrt{\lVert\widehat V\rVert_F^2+\lVert\widehat W\rVert_F^2}.
+\]
+
+The robustifying signal and analytical generalized-force command are
+
+\[
+\nu=-K_Z(\lVert\widehat Z\rVert_F+Z_B)r,
+\]
+
+\[
+\boxed{u_c=\widehat{\mathcal G}+K_vr-\nu-h}.
+\]
+
+Thus the implemented robust contribution has the positive command sign
+(+K_Z(\lVert\widehat Z\rVert_F+Z_B)r). In the payload benchmark (h=0):
+contact and payload dynamics act only through MuJoCo and are not leaked into
+the network through an external-wrench input.
+
+## v0.3 power-conjugate torque realization
+
+For a physical wrench (w=[f;\mu]), its analytical generalized force is
+
+\[
+u=\mathcal E^Tw.
+\]
+
+The inverse conversion and running joint torque are
+
+\[
+w_c=\mathcal E^{-T}u_c,
+\]
+
+\[
+\boxed{\tau_q=J_g^Tw_c=J_g^T\mathcal E^{-T}u_c=J_a^Tu_c}.
+\]
+
+No independent orientation PD term and no
+(-D_q\dot q) term are added while running. Per-joint torque-rate and
+absolute-torque limits follow this mapping. Bounded
+(-D_{q,safe}\dot q) is a separate stopping/fault command only.
+
+## v0.3 discretization and assumptions
+
+The impedance uses the same semi-implicit Euler order documented below. The
+two network laws use explicit Euler from the same pre-update (V_k,W_k), then
+separate Frobenius projections:
+
+\[
+W_{k+1}=\Pi_{W_{max}}(W_k+\Delta t\dot W_k),\qquad
+V_{k+1}=\Pi_{V_{max}}(V_k+\Delta t\dot V_k).
+\]
+
+If downstream torque-rate or absolute-torque limiting occurs, both matrices
+are restored from their pre-sample checkpoint. The impedance step and bounded
+actuator command are not rolled back.
+
+The source UUB argument requires a compact rotation chart and operating set,
+nonsingular analytical Jacobian, bounded positive-definite task inertia,
+Christoffel/skew-symmetry property, bounded ideal weights and reconstruction
+residual, positive gains, and continuous unsaturated dynamics. Those
+assumptions are mathematically coherent; however the tested software also has
+sampling, projection, command and actuator limits, contact-mode changes, and
+conditional update rollback. This repository therefore reports empirical
+deterministic performance and does not claim that the continuous proof alone
+certifies the complete sampled MuJoCo loop.
+
+## Legacy v0.1/v0.2 3D contract
+
+The remaining sections specify the backward-compatible 3D Gaussian-RBF mode.
+They do not override the v0.3 running torque contract above.
 
 ## Impedance reference model
 
@@ -273,7 +484,7 @@ controller and mapper state, RBF weights, impedance state, command-rate
 history, sequence counters, and the seeded generator before returning to
 `start`.
 
-## Source comparison and chosen resolution
+## Legacy source comparison and chosen resolution
 
 | Item | Source material | v0.1 Cartesian demo | MuJoCo feature branch |
 |---|---|---|---|
@@ -291,8 +502,6 @@ history, sequence counters, and the seeded generator before returning to
 
 Tests verify dimensions, signs, deterministic reset, finite-value guards,
 virtual work before nonlinear limits, numerical behavior, and repeatable
-tracking/grasp metrics. They do **not** extend the manuscript's continuous UUB
-result to this fixed-RBF, sampled, leaked, projected, force-saturated,
-torque-rate-limited, torque-saturated, intermittently adaptation-frozen,
-contacting rigid-body system. They also do not prove hard real-time behavior,
-formal discrete-time stability, hardware safety, or validated 6D control.
+tracking/grasp metrics for both modes. They do **not** turn the continuous UUB
+analysis into a formal discrete-time/contact proof, prove hard-real-time
+behavior, establish hardware safety, or validate sim-to-real transfer.

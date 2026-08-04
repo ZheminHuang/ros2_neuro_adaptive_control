@@ -8,6 +8,9 @@ Audit date: 2026-08-03.
 > [`v0.2.0_release_audit.md`](v0.2.0_release_audit.md),
 > [`ur5e_robotiq_model_provenance.md`](ur5e_robotiq_model_provenance.md), and
 > [`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md).
+> The v0.3 six-DoF code and generated payload artifacts are audited in
+> [`v0.3.0_release_audit.md`](v0.3.0_release_audit.md) and
+> [`payload_benchmark_protocol.md`](payload_benchmark_protocol.md).
 
 ## First-party material
 
@@ -42,6 +45,7 @@ vendored in this repository.
 | `ament_index_python`, `launch`, `launch_ros` | package lookup and launch | Apache License 2.0 |
 | NumPy | controller mathematics | BSD-style |
 | Matplotlib | optional generated demo plot | PSF/BSD-compatible distribution terms |
+| Pillow | generated deterministic comparison GIF | HPND-style permissive license |
 | setuptools | build tooling | permissive; not bundled |
 | pytest and ament linters | tests only | permissive; not bundled |
 

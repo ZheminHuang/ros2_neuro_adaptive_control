@@ -2,7 +2,44 @@
 
 All notable changes are documented here. The project follows semantic versioning.
 
-## [Unreleased] - v0.2.0 candidate
+## [Unreleased] - v0.3.0 candidate
+
+### Added
+
+- Rotation-vector XYZ/RX/RY/RZ impedance coordinates with guarded SO(3)
+  Exp/Log, left Jacobian, inverse Jacobian, and analytical/geometric
+  power-conjugate transformations.
+- A 42D two-layer tanh network with online hidden/output V/W adaptation,
+  leakage, projection, deterministic reset, and exact payload-time checkpoint.
+- Six-dimensional NAC generalized-force output and the running torque contract
+  `J_g.T @ E^-T @ u`, without independent orientation PD or running joint
+  damping; bounded joint damping is stopping/fault-only.
+- Physical held-out payload variants that change MuJoCo mass, COM, and inertia
+  before reset while remaining hidden from the NAC.
+- Matched adaptive, payload-time-frozen, nominal model-based, and payload-aware
+  oracle controllers on one grasp/lift/loaded-trajectory scenario.
+- A native MuJoCo benchmark launch, aggregate acceptance gates, machine-readable
+  metrics, synchronized comparison GIF, and trajectory/error/NN result plot.
+
+### Candidate evidence
+
+- Three of three adaptive and frozen held-out payload trials completed without
+  an added adaptive safety failure.
+- Median loaded position RMSE was 6.497 mm adaptive versus 13.779 mm frozen
+  (52.8% lower).
+- Median loaded rotation-vector RMSE was 1.368 mrad adaptive versus 4.916 mrad
+  frozen (72.2% lower).
+- The 310 g nominal baseline remains visible alongside a payload-aware oracle;
+  metric-specific results are reported without a universal superiority claim.
+
+### Release gate
+
+- This section is intentionally undated and unreleased. Only the feature
+  branch may be pushed until the user reviews the final GIF and metrics.
+- `CITATION.cff` and the public release tag remain at v0.1.0. Do not merge,
+  tag, or create v0.3.0 before explicit user approval and final CI/audit.
+
+## v0.2.0 candidate (superseded, unreleased)
 
 ### Added
 
