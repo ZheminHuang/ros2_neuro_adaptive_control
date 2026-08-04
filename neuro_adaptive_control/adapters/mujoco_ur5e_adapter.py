@@ -137,6 +137,9 @@ class MujocoUR5ePlant:
         *,
         seed: int = 23,
         gripper: RobotiqGripperAdapter | None = None,
+        payload_mass_kg: float | None = None,
+        payload_com_offset_m: Iterable[float] = (0.0, 0.0, 0.0),
+        payload_inertia_scale: float = 1.0,
     ) -> None:
         require_mujoco()
         path = Path(model_path) if model_path is not None else default_model_path()
@@ -169,6 +172,27 @@ class MujocoUR5ePlant:
         self._object_body_id = self._id(
             mujoco.mjtObj.mjOBJ_BODY, "grasp_object"
         )
+        nominal_mass = float(self.model.body_mass[self._object_body_id])
+        selected_mass = nominal_mass if payload_mass_kg is None else float(
+            payload_mass_kg
+        )
+        inertia_scale = float(payload_inertia_scale)
+        com_offset = _finite_vector(
+            payload_com_offset_m,
+            3,
+            "payload_com_offset_m",
+        )
+        if not np.isfinite(selected_mass) or selected_mass <= 0.0:
+            raise ValueError("payload_mass_kg must be finite and positive")
+        if not np.isfinite(inertia_scale) or inertia_scale <= 0.0:
+            raise ValueError("payload_inertia_scale must be finite and positive")
+        mass_ratio = selected_mass / nominal_mass
+        self.model.body_mass[self._object_body_id] = selected_mass
+        self.model.body_inertia[self._object_body_id] *= (
+            mass_ratio * inertia_scale
+        )
+        self.model.body_ipos[self._object_body_id] += com_offset
+        mujoco.mj_setConst(self.model, self.data)
         self._injection_body_id = self._id(
             mujoco.mjtObj.mjOBJ_BODY, "gripper_base_mount"
         )
