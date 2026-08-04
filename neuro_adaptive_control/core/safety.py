@@ -41,14 +41,24 @@ class SafetyConfig:
     command_norm_limit: float
     watchdog_timeout: float
     maximum_dt: float = 0.02
+    command_dimension: int = 3
 
     def __post_init__(self) -> None:
         limits = np.asarray(self.command_limits, dtype=float)
-        if limits.shape != (3,):
-            raise ValueError("command_limits must have shape (3,).")
+        try:
+            dimension = int(self.command_dimension)
+        except (TypeError, ValueError, OverflowError) as error:
+            raise ValueError("command_dimension must be an integer.") from error
+        if dimension <= 0 or dimension != self.command_dimension:
+            raise ValueError("command_dimension must be a positive integer.")
+        if limits.shape != (dimension,):
+            raise ValueError(
+                f"command_limits must have shape ({dimension},)."
+            )
         if not np.all(np.isfinite(limits)) or np.any(limits <= 0.0):
             raise ValueError("command_limits must be finite and positive.")
         object.__setattr__(self, "command_limits", limits.copy())
+        object.__setattr__(self, "command_dimension", dimension)
         for name in ("command_norm_limit", "watchdog_timeout", "maximum_dt"):
             try:
                 value = float(getattr(self, name))
@@ -64,6 +74,7 @@ class SafetySupervisor:
 
     def __init__(self, config: SafetyConfig) -> None:
         self.config = config
+        self._dimension = int(config.command_limits.size)
         self.reset()
 
     def reset(self) -> None:
@@ -73,7 +84,7 @@ class SafetySupervisor:
         self.last_measurement_time: float | None = None
         self.start_time: float | None = None
         self.last_observed_time: float | None = None
-        self.last_command = np.zeros(3, dtype=float)
+        self.last_command = np.zeros(self._dimension, dtype=float)
         self.last_saturated = False
 
     def start(self, now: float) -> None:
@@ -174,12 +185,12 @@ class SafetySupervisor:
         """Apply lifecycle gating, finite checks, and two-stage saturation."""
         self.tick(now)
         if self.state == ControllerState.STOPPING:
-            self.last_command = np.zeros(3, dtype=float)
+            self.last_command = np.zeros(self._dimension, dtype=float)
             self.last_saturated = False
             self.complete_stop()
             return self.last_command.copy()
         if self.state != ControllerState.RUNNING:
-            self.last_command = np.zeros(3, dtype=float)
+            self.last_command = np.zeros(self._dimension, dtype=float)
             self.last_saturated = False
             return self.last_command.copy()
 
@@ -187,13 +198,16 @@ class SafetySupervisor:
             array = np.asarray(command, dtype=float)
         except (TypeError, ValueError, OverflowError):
             self.trigger_fault("command is not numeric")
-            return np.zeros(3, dtype=float)
-        if array.shape != (3,):
-            self.trigger_fault(f"command must have shape (3,), got {array.shape}")
-            return np.zeros(3, dtype=float)
+            return np.zeros(self._dimension, dtype=float)
+        if array.shape != (self._dimension,):
+            self.trigger_fault(
+                "command must have shape "
+                f"({self._dimension},), got {array.shape}"
+            )
+            return np.zeros(self._dimension, dtype=float)
         if not np.all(np.isfinite(array)):
             self.trigger_fault("command contains NaN or Inf")
-            return np.zeros(3, dtype=float)
+            return np.zeros(self._dimension, dtype=float)
 
         limited = np.clip(
             array, -self.config.command_limits, self.config.command_limits

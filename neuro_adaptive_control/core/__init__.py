@@ -25,6 +25,23 @@ from .neuro_adaptive_controller import (
     NeuroAdaptiveController,
 )
 from .rbf_network import RBFNetwork
+from .pose_impedance_model import (
+    PoseImpedanceModel,
+    PoseImpedanceParameters,
+    PoseImpedanceState,
+)
+from .pose_neuro_adaptive_controller import (
+    POSE_NN_INPUT_DIM,
+    PoseControllerOutput,
+    PoseNACParameters,
+    PoseNeuroAdaptiveController,
+    build_pose_nn_features,
+)
+from .pose_references import (
+    PoseReferenceSample,
+    fixed_pose_reference,
+    smooth_payload_reference,
+)
 from .references import ReferenceSample, make_reference
 from .safety import ControllerState, SafetyConfig, SafetySupervisor
 from .simulation import (
@@ -34,6 +51,17 @@ from .simulation import (
     run_comparison,
     run_simulation,
 )
+from .so3 import (
+    coordinate_transform,
+    exp,
+    hat,
+    left_jacobian,
+    left_jacobian_inverse,
+    log,
+    validate_rotation_matrix,
+    vee,
+)
+from .two_layer_network import TwoLayerAdaptiveNetwork, TwoLayerWeights
 
 __all__ = [
     "CartesianImpedanceModel",
@@ -44,13 +72,34 @@ __all__ = [
     "ImpedanceState",
     "NACParameters",
     "NeuroAdaptiveController",
+    "POSE_NN_INPUT_DIM",
+    "PoseControllerOutput",
+    "PoseImpedanceModel",
+    "PoseImpedanceParameters",
+    "PoseImpedanceState",
+    "PoseNACParameters",
+    "PoseNeuroAdaptiveController",
+    "PoseReferenceSample",
     "RBFNetwork",
     "ReferenceSample",
     "SafetyConfig",
     "SafetySupervisor",
     "SimulationConfig",
     "SimulationResult",
+    "TwoLayerAdaptiveNetwork",
+    "TwoLayerWeights",
+    "build_pose_nn_features",
+    "coordinate_transform",
+    "exp",
+    "fixed_pose_reference",
+    "hat",
+    "left_jacobian",
+    "left_jacobian_inverse",
+    "log",
     "make_reference",
     "run_comparison",
     "run_simulation",
+    "smooth_payload_reference",
+    "validate_rotation_matrix",
+    "vee",
 ]

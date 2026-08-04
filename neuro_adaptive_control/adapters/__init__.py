@@ -15,5 +15,17 @@
 """Interfaces for future robot-specific state and command adapters."""
 
 from .interfaces import CartesianState, CartesianStateProvider, WrenchCommandSink
+from .pose_wrench_to_torque import (
+    PoseTorqueConfig,
+    PoseTorqueResult,
+    PoseWrenchToTorque,
+)
 
-__all__ = ["CartesianState", "CartesianStateProvider", "WrenchCommandSink"]
+__all__ = [
+    "CartesianState",
+    "CartesianStateProvider",
+    "PoseTorqueConfig",
+    "PoseTorqueResult",
+    "PoseWrenchToTorque",
+    "WrenchCommandSink",
+]
