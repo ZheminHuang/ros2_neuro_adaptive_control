@@ -109,7 +109,7 @@ def compliance_wrench(time_sec: float) -> tuple[str, np.ndarray]:
     force_scale = _smooth_pulse(time_sec, 7.0, 0.5, 1.0)
     moment_scale = _smooth_pulse(time_sec, 10.0, 0.5, 1.0)
     wrench = np.array(
-        (0.0, 6.0 * force_scale, 0.0, 0.0, 0.0, 0.4 * moment_scale)
+        (0.0, 6.0 * force_scale, 0.0, 0.0, 0.0, 1.0 * moment_scale)
     )
     if force_scale > 0.0:
         phase = "lateral_push"
@@ -169,7 +169,7 @@ def _rmse(error: np.ndarray) -> float:
 def run_compliance_benchmark(
     variant: ComplianceVariant | str,
 ) -> ShowcaseResult:
-    """Run grasp, lift, 6 N push, and 0.4 Nm twist with one impedance."""
+    """Run grasp, lift, 6 N push, and 1.0 Nm twist with one impedance."""
     selected = ComplianceVariant(variant)
     payload = DEFAULT_PAYLOAD_CASE
     plant = MujocoUR5ePlant(
@@ -274,14 +274,14 @@ def run_compliance_benchmark(
             and contact.right_finger_contacts > 0
         ),
         "force_n": 6.0,
-        "moment_nm": 0.4,
+        "moment_nm": 1.0,
         "push_hold_deflection_m": float(np.mean(y_deflection[push_hold])),
         "twist_hold_deflection_rad": float(np.mean(rz_deflection[twist_hold])),
         "apparent_translation_compliance_m_per_n": float(
             abs(np.mean(y_deflection[push_hold])) / 6.0
         ),
         "apparent_rotation_compliance_rad_per_nm": float(
-            abs(np.mean(rz_deflection[twist_hold])) / 0.4
+            abs(np.mean(rz_deflection[twist_hold])) / 1.0
         ),
         "actual_to_impedance_position_rmse_m": _rmse(model_error[time >= 6.5, :3]),
         "actual_to_impedance_orientation_rmse_rad": _rmse(

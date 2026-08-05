@@ -3,11 +3,11 @@
   "artifact_kind": "six_dof_nac_showcase_scenarios",
   "traceability": {
     "generator": "examples/run_showcase_benchmarks.py",
-    "generator_sha256": "86e560d18fe615ce5e539fefc97cb62a3cbc201a175f1607ce66e3b0ed3715b3",
+    "generator_sha256": "6ac1d97221df063211d24b59b49076e00a2bd0c1c62b997f9041d39933df5335",
     "source_files_sha256": {
-      "examples/run_showcase_benchmarks.py": "86e560d18fe615ce5e539fefc97cb62a3cbc201a175f1607ce66e3b0ed3715b3",
-      "examples/showcase_rendering.py": "6ddfa455d2feff0927f6d19c3379958da1ee08419c45616d1bac117e17da6780",
-      "neuro_adaptive_control/adapters/mujoco_showcase_benchmarks.py": "a6d71ce1bc8c74bfe5e2d473cb57314f9982083235d5dbd3b8c6b5a4dfa88fac",
+      "examples/run_showcase_benchmarks.py": "6ac1d97221df063211d24b59b49076e00a2bd0c1c62b997f9041d39933df5335",
+      "examples/showcase_rendering.py": "48e015084072ce892515470310dd8c2d1b58a650476a06decd66595320b19ba4",
+      "neuro_adaptive_control/adapters/mujoco_showcase_benchmarks.py": "6704c8ad4087a8df40b5b0a2e55bdc66a00a36e24e07019573524555eae35639",
       "neuro_adaptive_control/adapters/mujoco_ur5e_adapter.py": "6a24bbecff872a98279c4d921e6869187d35280e4f91847015c624db3e82315e",
       "neuro_adaptive_control/adapters/mujoco_payload_benchmark.py": "37ef5bafe40a960d2ac777f3ee621e23e2587749395dd8dfa5d4bb35be77d5bf",
       "neuro_adaptive_control/adapters/pose_wrench_to_torque.py": "a7653d86d02ba2392ea3c85e31dd9031b2ea70d2eecfd7a4f6facb855d6b51c3",
@@ -24,9 +24,16 @@
   },
   "compliance": {
     "contract": "World-frame physical wrench at gripper_pinch; generalized input h=E(rho)^T w; the same w is applied once by MuJoCo.",
+    "visualization": {
+      "source": "recorded physical_wrench applied by MuJoCo",
+      "application_site": "gripper_pinch",
+      "force_marker": "world-direction 3D arrow",
+      "moment_marker": "right-hand 3D ring",
+      "visual_geometry_affects_dynamics": false
+    },
     "comparison": {
-      "maximum_actual_to_impedance_position_rmse_m": 0.00028290130931754153,
-      "maximum_actual_to_impedance_orientation_rmse_rad": 7.633357658484977e-05,
+      "maximum_actual_to_impedance_position_rmse_m": 0.00028306004120709624,
+      "maximum_actual_to_impedance_orientation_rmse_rad": 0.00011992384481965825,
       "controller_tuning_identical_between_trials": true,
       "online_adaptation_enabled_in_both_trials": true,
       "both_trials_completed": true,
@@ -35,17 +42,17 @@
     "lower_stiffness_metrics": {
       "success": true,
       "force_n": 6.0,
-      "moment_nm": 0.4,
+      "moment_nm": 1.0,
       "push_hold_deflection_m": 0.04913844364454945,
-      "twist_hold_deflection_rad": 0.03029288190326238,
+      "twist_hold_deflection_rad": 0.0757321620405869,
       "apparent_translation_compliance_m_per_n": 0.008189740607424908,
-      "apparent_rotation_compliance_rad_per_nm": 0.07573220475815594,
-      "actual_to_impedance_position_rmse_m": 0.00028290130931754153,
-      "actual_to_impedance_orientation_rmse_rad": 7.633357658484977e-05,
+      "apparent_rotation_compliance_rad_per_nm": 0.0757321620405869,
+      "actual_to_impedance_position_rmse_m": 0.00028306004120709624,
+      "actual_to_impedance_orientation_rmse_rad": 0.00011992384481965825,
       "actual_to_impedance_position_max_error_m": 0.0012379585197114834,
-      "actual_to_impedance_orientation_max_error_rad": 0.0002877395560295698,
-      "recovery_position_error_m": 5.833015403951873e-06,
-      "recovery_orientation_error_rad": 1.4969859232432778e-05,
+      "actual_to_impedance_orientation_max_error_rad": 0.0003443314319027934,
+      "recovery_position_error_m": 4.0707491978680685e-06,
+      "recovery_orientation_error_rad": 3.842622109186462e-05,
       "maximum_arm_torque_abs_nm": 33.49374220984767,
       "saturated_control_samples": 2,
       "completed_steps": 7000
@@ -53,17 +60,17 @@
     "higher_stiffness_metrics": {
       "success": true,
       "force_n": 6.0,
-      "moment_nm": 0.4,
+      "moment_nm": 1.0,
       "push_hold_deflection_m": 0.025949219348580035,
-      "twist_hold_deflection_rad": 0.015957005111411026,
+      "twist_hold_deflection_rad": 0.03989108268724981,
       "apparent_translation_compliance_m_per_n": 0.004324869891430006,
-      "apparent_rotation_compliance_rad_per_nm": 0.03989251277852756,
-      "actual_to_impedance_position_rmse_m": 0.00017646287630855654,
-      "actual_to_impedance_orientation_rmse_rad": 4.7272323468534616e-05,
+      "apparent_rotation_compliance_rad_per_nm": 0.03989108268724981,
+      "actual_to_impedance_position_rmse_m": 0.00017653342610877493,
+      "actual_to_impedance_orientation_rmse_rad": 6.947913051013033e-05,
       "actual_to_impedance_position_max_error_m": 0.0007869006645308503,
-      "actual_to_impedance_orientation_max_error_rad": 0.00018435666309012767,
-      "recovery_position_error_m": 4.8321181500125664e-06,
-      "recovery_orientation_error_rad": 1.2774209908197203e-06,
+      "actual_to_impedance_orientation_max_error_rad": 0.00020473633767045834,
+      "recovery_position_error_m": 3.075320992645012e-06,
+      "recovery_orientation_error_rad": 1.0026042944243447e-06,
       "maximum_arm_torque_abs_nm": 29.81788786496154,
       "saturated_control_samples": 2,
       "completed_steps": 7000
@@ -135,12 +142,12 @@
     {
       "scenario": "push_and_twist_compliance",
       "variant": "soft_impedance",
-      "deterministic_history_sha256": "8458b477ad96d33e406484d8299be2726df2f82b5d8e7a3545339e6eaee980b0"
+      "deterministic_history_sha256": "cc1ed8136755bd1bf6ed263d90e2eb12588d208e722ad4cf1bae78f4cdf31f85"
     },
     {
       "scenario": "push_and_twist_compliance",
       "variant": "stiff_impedance",
-      "deterministic_history_sha256": "43dc858f1c160c414b91abb4ddde249215618f0d3c22ca1404234250d6e593ce"
+      "deterministic_history_sha256": "587eaa1642ced7da52916dff237980934b1e3648cce523225e9ce35116eaf0df"
     },
     {
       "scenario": "unknown_joint_drag",

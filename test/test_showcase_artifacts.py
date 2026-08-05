@@ -64,7 +64,7 @@ def test_showcase_metrics_support_only_the_concise_readme_claims():
     assert drag["nn_adaptation_ablation_gate_passed"]
     assert drag["position_rmse_improvement_vs_nominal_ratio"] >= 0.10
     assert drag["orientation_rmse_improvement_vs_nominal_ratio"] >= 0.10
-    for text in ("0.283", "0.077", "4.121", "41.529"):
+    for text in ("0.283", "0.120", "4.121", "41.529"):
         assert text in readme
     assert "1.89" not in readme
     assert "1.90" not in readme

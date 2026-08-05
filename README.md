@@ -26,9 +26,9 @@ its pre-pickup model.
 **Impedance-parameter robustness — one NAC tuning across impedance settings.**
 Without retuning the NAC gains, neural-network architecture, or adaptation
 hyperparameters—and with online weight adaptation enabled—NAC tracked two
-Cartesian impedance configurations under the same 6 N push and 0.4 N·m twist
+Cartesian impedance configurations under the same 6 N push and 1.0 N·m twist
 and returned to the target after release. Across both tested settings,
-actual-to-impedance RMSE remained below 0.283 mm and 0.077 mrad.
+maximum actual-to-impedance RMSE was 0.283 mm and 0.120 mrad.
 
 <picture>
   <source srcset="docs/assets/compliance_comparison.webp" type="image/webp">
@@ -45,11 +45,6 @@ fixed nominal model-based controller whose dynamics model was not updated.
   <source srcset="docs/assets/joint_drag_comparison.webp" type="image/webp">
   <img src="docs/assets/joint_drag_comparison.gif" alt="Adaptive NAC and fixed nominal model-based control under hidden joint drag">
 </picture>
-
-These are deterministic results for the bundled MuJoCo model, not real-robot,
-hard-real-time, or universal-superiority claims. *Model-free* means the NAC
-does not require known robot or payload `M/C/G`; measured state, pose/twist,
-forward kinematics, and Jacobians are still required.
 
 ## Quick Start
 

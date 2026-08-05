@@ -41,6 +41,74 @@ class Trace:
     dashed: bool = False
 
 
+@dataclass(frozen=True)
+class WrenchConnector:
+    """One MuJoCo scene connector derived from a recorded physical wrench."""
+
+    kind: str
+    width: float
+    start: np.ndarray
+    end: np.ndarray
+
+
+def wrench_connectors(
+    application_point: np.ndarray,
+    physical_wrench: np.ndarray,
+) -> tuple[WrenchConnector, ...]:
+    """Create force-arrow and right-hand moment-ring connector geometry."""
+    point = np.asarray(application_point, dtype=float)
+    wrench = np.asarray(physical_wrench, dtype=float)
+    if point.shape != (3,) or wrench.shape != (6,):
+        raise ValueError("application_point/wrench must have shapes (3,)/(6,)")
+    if not np.all(np.isfinite(point)) or not np.all(np.isfinite(wrench)):
+        raise ValueError("application_point/wrench must be finite")
+    connectors: list[WrenchConnector] = []
+    force = wrench[:3]
+    force_norm = float(np.linalg.norm(force))
+    if force_norm > 1.0e-9:
+        direction = force / force_norm
+        length = 0.18 * min(force_norm / 6.0, 1.25)
+        connectors.append(
+            WrenchConnector(
+                "arrow",
+                0.012,
+                point - length * direction,
+                point.copy(),
+            )
+        )
+    moment = wrench[3:]
+    moment_norm = float(np.linalg.norm(moment))
+    if moment_norm > 1.0e-9:
+        axis = moment / moment_norm
+        reference = np.array((1.0, 0.0, 0.0))
+        if abs(float(axis @ reference)) > 0.9:
+            reference = np.array((0.0, 1.0, 0.0))
+        basis_u = reference - float(axis @ reference) * axis
+        basis_u /= np.linalg.norm(basis_u)
+        basis_v = np.cross(axis, basis_u)
+        radius = 0.09 * min(np.sqrt(moment_norm / 1.0), 1.0)
+        angles = np.linspace(-0.4, 5.2, 22)
+        points = np.asarray(
+            [
+                point
+                + radius
+                * (np.cos(angle) * basis_u + np.sin(angle) * basis_v)
+                for angle in angles
+            ]
+        )
+        for index, (start, end) in enumerate(zip(points[:-1], points[1:])):
+            final_segment = index == len(points) - 2
+            connectors.append(
+                WrenchConnector(
+                    "arrow" if final_segment else "line",
+                    0.009 if final_segment else 5.0,
+                    start,
+                    end,
+                )
+            )
+    return tuple(connectors)
+
+
 def nice_upper_limit(*arrays: np.ndarray, floor: float = 1.0) -> float:
     """Return a stable 1/2/5-scaled positive chart limit."""
     maximum = max(float(np.max(np.asarray(array))) for array in arrays)

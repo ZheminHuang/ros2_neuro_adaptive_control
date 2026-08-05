@@ -57,6 +57,7 @@ from examples.showcase_rendering import (  # noqa: E402
     Trace,
     draw_metric_panel,
     nice_upper_limit,
+    wrench_connectors,
 )
 
 
@@ -135,6 +136,13 @@ def _report(
                 "World-frame physical wrench at gripper_pinch; generalized "
                 "input h=E(rho)^T w; the same w is applied once by MuJoCo."
             ),
+            "visualization": {
+                "source": "recorded physical_wrench applied by MuJoCo",
+                "application_site": "gripper_pinch",
+                "force_marker": "world-direction 3D arrow",
+                "moment_marker": "right-hand 3D ring",
+                "visual_geometry_affects_dynamics": False,
+            },
             "comparison": compare_compliance(lower, higher),
             "lower_stiffness_metrics": lower.metrics,
             "higher_stiffness_metrics": higher.metrics,
@@ -193,6 +201,11 @@ def _render_frames(
     plant.model.vis.quality.offsamples = 4
     plant.model.vis.quality.shadowsize = 2048
     renderer = mujoco.Renderer(plant.model, height=360, width=480)
+    tcp_site_id = mujoco.mj_name2id(
+        plant.model,
+        mujoco.mjtObj.mjOBJ_SITE,
+        "gripper_pinch",
+    )
     camera = mujoco.MjvCamera()
     camera.lookat[:] = np.array((-0.09, 0.43, 0.31))
     camera.distance = 1.02
@@ -212,6 +225,11 @@ def _render_frames(
                 camera=camera,
                 scene_option=scene_option,
             )
+            _add_recorded_wrench_visual(
+                renderer,
+                plant.data.site_xpos[tcp_site_id],
+                result.physical_wrench[index],
+            )
             frames.append(Image.fromarray(renderer.render().copy()))
     finally:
         renderer.close()
@@ -228,38 +246,64 @@ def _font(size: int, *, bold: bool = False):
         return ImageFont.load_default()
 
 
-def _draw_force_overlay(draw, phase: str, offset_x: int) -> None:
+def _add_recorded_wrench_visual(renderer, point, physical_wrench) -> None:
+    """Append MuJoCo decorations derived from the exact applied wrench."""
+    import mujoco
+
+    rgba = np.asarray(
+        (*np.asarray(WRENCH_COLOR) / 255.0, 1.0),
+        dtype=np.float32,
+    )
+    identity = np.eye(3).reshape(-1)
+    for connector in wrench_connectors(point, physical_wrench):
+        if renderer.scene.ngeom >= renderer.scene.maxgeom:
+            raise RuntimeError("MuJoCo scene has no room for wrench geometry")
+        geom = renderer.scene.geoms[renderer.scene.ngeom]
+        geom_type = (
+            mujoco.mjtGeom.mjGEOM_ARROW
+            if connector.kind == "arrow"
+            else mujoco.mjtGeom.mjGEOM_LINE
+        )
+        mujoco.mjv_initGeom(
+            geom,
+            geom_type,
+            np.zeros(3),
+            np.zeros(3),
+            identity,
+            rgba,
+        )
+        mujoco.mjv_connector(
+            geom,
+            geom_type,
+            connector.width,
+            connector.start,
+            connector.end,
+        )
+        geom.emission = 1.0
+        renderer.scene.ngeom += 1
+
+
+def _draw_status_badge(draw, text: str, offset_x: int) -> None:
+    draw.rounded_rectangle(
+        (offset_x + 286, 45, offset_x + 461, 72),
+        radius=7,
+        fill=(70, 47, 22),
+        outline=WRENCH_COLOR,
+        width=2,
+    )
+    draw.text(
+        (offset_x + 297, 51),
+        text,
+        fill=WRENCH_COLOR,
+        font=_font(11, bold=True),
+    )
+
+
+def _draw_wrench_badge(draw, phase: str, offset_x: int) -> None:
     if phase == "lateral_push":
-        start = (offset_x + 365, 115)
-        end = (offset_x + 285, 115)
-        draw.line((start, end), fill=WRENCH_COLOR, width=7)
-        draw.polygon(
-            (
-                (end[0], end[1]),
-                (end[0] + 20, end[1] - 11),
-                (end[0] + 20, end[1] + 11),
-            ),
-            fill=WRENCH_COLOR,
-        )
-        draw.text(
-            (offset_x + 315, 80),
-            "6 N push",
-            fill=WRENCH_COLOR,
-            font=_font(14, bold=True),
-        )
-    if phase == "twist_moment":
-        box = (offset_x + 290, 65, offset_x + 390, 165)
-        draw.arc(box, start=35, end=315, fill=WRENCH_COLOR, width=7)
-        draw.polygon(
-            ((offset_x + 385, 116), (offset_x + 372, 105), (offset_x + 370, 123)),
-            fill=WRENCH_COLOR,
-        )
-        draw.text(
-            (offset_x + 300, 42),
-            "0.4 Nm twist",
-            fill=WRENCH_COLOR,
-            font=_font(14, bold=True),
-        )
+        _draw_status_badge(draw, "6 N TCP PUSH", offset_x)
+    elif phase == "twist_moment":
+        _draw_status_badge(draw, "1.0 N·m TCP TWIST", offset_x)
 
 
 def _save_animation(frames: list, webp_path: Path, gif_path: Path, fps: float) -> None:
@@ -332,8 +376,8 @@ def _write_compliance_animation(
             (642, 7), "Higher stiffness", fill="white", font=_font(15, bold=True)
         )
         phase = lower.phase[history_index]
-        _draw_force_overlay(draw, phase, 0)
-        _draw_force_overlay(draw, phase, 480)
+        _draw_wrench_badge(draw, phase, 0)
+        _draw_wrench_badge(draw, phase, 480)
         draw_metric_panel(
             canvas,
             title="Fixed-tuning impedance tracking",
@@ -441,19 +485,7 @@ def _write_drag_animation(
         )
         if adaptive.time[history_index] >= event_time:
             for offset in (0, 480):
-                draw.rounded_rectangle(
-                    (offset + 296, 45, offset + 461, 72),
-                    radius=7,
-                    fill=(70, 47, 22),
-                    outline=WRENCH_COLOR,
-                    width=2,
-                )
-                draw.text(
-                    (offset + 308, 51),
-                    "HIDDEN JOINT DRAG",
-                    fill=WRENCH_COLOR,
-                    font=_font(11, bold=True),
-                )
+                _draw_status_badge(draw, "HIDDEN JOINT DRAG", offset)
         draw.text(
             (10, 368),
             (

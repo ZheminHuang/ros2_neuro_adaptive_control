@@ -31,7 +31,7 @@ def test_compliance_wrench_has_smooth_separate_force_and_moment_events():
 
     phase, wrench = compliance_wrench(10.75)
     assert phase == "twist_moment"
-    np.testing.assert_allclose(wrench, (0.0, 0.0, 0.0, 0.0, 0.0, 0.4))
+    np.testing.assert_allclose(wrench, (0.0, 0.0, 0.0, 0.0, 0.0, 1.0))
 
     for stamp in (6.99, 9.0, 12.0, 13.5):
         _, wrench = compliance_wrench(stamp)

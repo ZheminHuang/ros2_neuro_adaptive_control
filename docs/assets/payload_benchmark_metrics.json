@@ -8,7 +8,7 @@
     "runner_sha256": "37ef5bafe40a960d2ac777f3ee621e23e2587749395dd8dfa5d4bb35be77d5bf",
     "source_files_sha256": {
       "neuro_adaptive_control/adapters/mujoco_payload_benchmark.py": "37ef5bafe40a960d2ac777f3ee621e23e2587749395dd8dfa5d4bb35be77d5bf",
-      "examples/showcase_rendering.py": "6ddfa455d2feff0927f6d19c3379958da1ee08419c45616d1bac117e17da6780",
+      "examples/showcase_rendering.py": "48e015084072ce892515470310dd8c2d1b58a650476a06decd66595320b19ba4",
       "neuro_adaptive_control/adapters/model_based_controller.py": "5b45c7b9ee62384e030160bfa4510efa1d4572cc92f3a48296b2abca13b3d485",
       "neuro_adaptive_control/adapters/mujoco_ur5e_adapter.py": "6a24bbecff872a98279c4d921e6869187d35280e4f91847015c624db3e82315e",
       "neuro_adaptive_control/adapters/pose_wrench_to_torque.py": "a7653d86d02ba2392ea3c85e31dd9031b2ea70d2eecfd7a4f6facb855d6b51c3",
@@ -169,8 +169,8 @@
         "final_combined_weight_norm": 11.053013067930772,
         "torque_saturation_count": 0,
         "simulated_duration_sec": 15.00000000000684,
-        "wall_duration_sec": 10.440856434,
-        "observed_step_rate_hz": 718.3318770265546,
+        "wall_duration_sec": 11.140125671,
+        "observed_step_rate_hz": 673.2419562845702,
         "fault_reason": ""
       },
       "deterministic_history_sha256": "c9348f351e69f656e50852eceedbb4cc8c115557a773387755f7185ccb04f8df"
@@ -208,8 +208,8 @@
         "final_combined_weight_norm": 11.95099003543519,
         "torque_saturation_count": 0,
         "simulated_duration_sec": 15.00000000000684,
-        "wall_duration_sec": 10.330328768000001,
-        "observed_step_rate_hz": 726.0175516613334,
+        "wall_duration_sec": 10.743979268,
+        "observed_step_rate_hz": 698.0653827523748,
         "fault_reason": ""
       },
       "deterministic_history_sha256": "c2201ffbcacb7daaeadfb358f4b0bb4c605fb7090dd37ca770af66359861a3e4"
@@ -247,8 +247,8 @@
         "final_combined_weight_norm": 10.888929167932952,
         "torque_saturation_count": 2,
         "simulated_duration_sec": 15.00000000000684,
-        "wall_duration_sec": 10.483154543000001,
-        "observed_step_rate_hz": 715.4335051759809,
+        "wall_duration_sec": 11.039398440000001,
+        "observed_step_rate_hz": 679.3848451764006,
         "fault_reason": ""
       },
       "deterministic_history_sha256": "7de7c1f72b7ae164f6263c6bf70bf0b103305950c21566acb2ae0d8e90dceaa7"
@@ -286,8 +286,8 @@
         "final_combined_weight_norm": 12.174482685394151,
         "torque_saturation_count": 2,
         "simulated_duration_sec": 15.00000000000684,
-        "wall_duration_sec": 10.298579297,
-        "observed_step_rate_hz": 728.2557898238224,
+        "wall_duration_sec": 10.746898251000001,
+        "observed_step_rate_hz": 697.8757800467798,
         "fault_reason": ""
       },
       "deterministic_history_sha256": "8584984ca74d7ad6dc53ff80b1779aed02c8b4c7c03b9e97f67581154ca13e92"
@@ -325,8 +325,8 @@
         "final_combined_weight_norm": 10.676862737394014,
         "torque_saturation_count": 2,
         "simulated_duration_sec": 15.00000000000684,
-        "wall_duration_sec": 10.496330998000001,
-        "observed_step_rate_hz": 714.5353935036032,
+        "wall_duration_sec": 10.990670844,
+        "observed_step_rate_hz": 682.3969261252494,
         "fault_reason": ""
       },
       "deterministic_history_sha256": "c2f3ffffd996b0be2ecd367dcec41a357491b3f2471acccbdb790bec67f964e2"
@@ -364,8 +364,8 @@
         "final_combined_weight_norm": 12.29126134419602,
         "torque_saturation_count": 2,
         "simulated_duration_sec": 15.00000000000684,
-        "wall_duration_sec": 10.324069722,
-        "observed_step_rate_hz": 726.4577053386156,
+        "wall_duration_sec": 10.817349125,
+        "observed_step_rate_hz": 693.3306777227642,
         "fault_reason": ""
       },
       "deterministic_history_sha256": "288171ab8b65ac799766b469df56ae5d15d305f918820ff40ef9119ea280af1f"
@@ -403,8 +403,8 @@
         "final_combined_weight_norm": 0.4388365745593621,
         "torque_saturation_count": 1,
         "simulated_duration_sec": 15.00000000000684,
-        "wall_duration_sec": 8.201395624,
-        "observed_step_rate_hz": 914.4785038844506,
+        "wall_duration_sec": 8.555934019,
+        "observed_step_rate_hz": 876.5846000383935,
         "fault_reason": ""
       },
       "deterministic_history_sha256": "5cc41b026db2f81f4307c8f5cc47df6fb622e18d706dfbe9df5565f104725a44"
@@ -442,8 +442,8 @@
         "final_combined_weight_norm": 0.4388365745593621,
         "torque_saturation_count": 1,
         "simulated_duration_sec": 15.00000000000684,
-        "wall_duration_sec": 8.311505098000001,
-        "observed_step_rate_hz": 902.3636407086757,
+        "wall_duration_sec": 8.707938948,
+        "observed_step_rate_hz": 861.2830251551735,
         "fault_reason": ""
       },
       "deterministic_history_sha256": "edb63b602a1356025f1ce310f43d16953a287aa8c16f00c62ee4256c11b77a4e"

@@ -16,6 +16,7 @@
 
 import numpy as np
 from PIL import Image
+import pytest
 
 from examples.showcase_rendering import (
     EVENT_COLOR,
@@ -23,6 +24,7 @@ from examples.showcase_rendering import (
     Trace,
     draw_metric_panel,
     nice_upper_limit,
+    wrench_connectors,
 )
 
 
@@ -57,3 +59,34 @@ def test_metric_panel_fills_third_column_and_confines_event_markers():
     # The gap between cards is not part of either event marker.
     event_x = int(10 + 274 * 0.4)
     assert tuple(panel[173, event_x]) != EVENT_COLOR
+
+
+def test_recorded_force_becomes_world_direction_arrow_at_tcp():
+    point = np.array((-0.1, 0.5, 0.4))
+    connectors = wrench_connectors(
+        point,
+        np.array((0.0, 6.0, 0.0, 0.0, 0.0, 0.0)),
+    )
+    assert len(connectors) == 1
+    arrow = connectors[0]
+    assert arrow.kind == "arrow"
+    np.testing.assert_allclose(arrow.end, point)
+    np.testing.assert_allclose(arrow.end - arrow.start, (0.0, 0.18, 0.0))
+
+
+def test_recorded_moment_becomes_right_hand_ring_at_tcp():
+    point = np.array((-0.1, 0.5, 0.4))
+    connectors = wrench_connectors(
+        point,
+        np.array((0.0, 0.0, 0.0, 0.0, 0.0, 1.0)),
+    )
+    assert len(connectors) == 21
+    assert all(connector.kind == "line" for connector in connectors[:-1])
+    assert connectors[-1].kind == "arrow"
+    for connector in connectors:
+        assert connector.start[2] == pytest.approx(point[2])
+        assert connector.end[2] == pytest.approx(point[2])
+    final = connectors[-1]
+    radial = final.start - point
+    tangent = final.end - final.start
+    assert np.cross(radial, tangent)[2] > 0.0
