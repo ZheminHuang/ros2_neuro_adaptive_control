@@ -85,26 +85,97 @@ MUJOCO_GL=egl python3 examples/run_showcase_benchmarks.py
 
 ```mermaid
 flowchart LR
-  Ref[6D pose reference] --> Imp[6D impedance model]
-  Obs[q, qdot, pose, twist] --> Err[em and filtered error r]
-  Imp --> Err
-  Obs --> NN[42D two-layer adaptive NN]
-  Err --> NN
-  NN --> NAC[6D analytical NAC force]
-  Err --> NAC
-  NAC --> Map[Jg transpose E inverse-transpose]
-  Obs --> Map
-  Map --> Safe[Torque rate and absolute limits]
-  Safe --> MJ[MuJoCo UR5e + articulated 2F-85 + payload]
-  Grip[Gripper opening and effort] --> MJ
-  MJ -->|measured state and kinematics only| Obs
-  MJ --> Contact[Collision, contact, object support transfer]
-  Contact --> MJ
+  subgraph REF["Reference"]
+    direction TB
+    TRAJ["6D Cartesian<br/>trajectory"]
+    GRIP["Gripper opening<br/>and effort"]
+  end
+
+  subgraph CORE["Pure NumPy neuro-adaptive core"]
+    direction TB
+    IMP["6D impedance<br/>reference"]
+    ERR["Tracking errors"]
+    NN["Online neural<br/>dynamics estimate"]
+    NAC["Robust Cartesian<br/>NAC wrench"]
+
+    IMP --> ERR
+    ERR --> NN
+    ERR --> NAC
+    NN --> NAC
+  end
+
+  subgraph ADAPTER["Robot adapter and safety"]
+    direction TB
+    MAP["Power-consistent<br/>wrench-to-torque mapping"]
+    SAFE["Torque and rate limits<br/>fault · stop · reset"]
+    STATE["Measured state and kinematics<br/>joints · TCP · Jacobian"]
+
+    MAP --> SAFE
+  end
+
+  subgraph PLANT["MuJoCo full dynamics"]
+    direction TB
+    ROBOT["UR5e + articulated<br/>Robotiq 2F-85"]
+    WORLD["Payload · inertia · friction<br/>collision · contact"]
+
+    WORLD <--> ROBOT
+  end
+
+  TRAJ --> IMP
+  NAC --> MAP
+  SAFE --> ROBOT
+  GRIP --> ROBOT
+
+  ROBOT -. measured state .-> STATE
+  STATE -.-> ERR
+  STATE -.-> NN
+  STATE -.-> MAP
+  ROBOT -. measured wrench .-> IMP
+
+  classDef reference fill:#EAF2FF,stroke:#3B82F6,color:#111827,stroke-width:1.5px;
+  classDef impedance fill:#E9F8EF,stroke:#22A06B,color:#111827,stroke-width:1.5px;
+  classDef adaptive fill:#FDECEC,stroke:#EF4444,color:#111827,stroke-width:2px;
+  classDef adapter fill:#F2ECFF,stroke:#8B5CF6,color:#111827,stroke-width:1.5px;
+  classDef safety fill:#FFF4D6,stroke:#D99A00,color:#111827,stroke-width:1.5px;
+  classDef plant fill:#EEF2F3,stroke:#374151,color:#111827,stroke-width:1.5px;
+
+  class TRAJ,GRIP reference;
+  class IMP impedance;
+  class ERR,NN,NAC adaptive;
+  class MAP,STATE adapter;
+  class SAFE safety;
+  class ROBOT,WORLD plant;
 ```
 
-The running torque path is the power-consistent 6D NAC mapping only; bounded
-joint damping is reserved for stopping or fault handling. The earlier 3D RBF
-API and demos remain available for compatibility.
+Solid arrows show command flow; dashed arrows show measured feedback. MuJoCo
+remains the sole dynamics authority.
+
+## Citation
+
+If this project supports your work, please cite:
+
+> Z. Huang, L. Cui, and Z.-P. Jiang, “Reinforcement Learning-Based Optimal
+> Impedance Control for Human-Robot Interaction,” in *Proc. 65th IEEE Conf.
+> Decis. Control (CDC)*, Honolulu, HI, USA, Dec. 15–18, 2026, to appear.
+
+<details>
+<summary>BibTeX</summary>
+
+```bibtex
+@inproceedings{huang2026reinforcement,
+  author    = {Zhemin Huang and Leilei Cui and Zhong-Ping Jiang},
+  title     = {Reinforcement Learning-Based Optimal Impedance Control for
+               Human-Robot Interaction},
+  booktitle = {Proceedings of the 65th IEEE Conference on Decision and
+               Control (CDC)},
+  address   = {Honolulu, HI, USA},
+  month     = dec,
+  year      = {2026},
+  note      = {To appear}
+}
+```
+
+</details>
 
 Apache-2.0 project code; vendored robot assets retain their documented BSD
 licenses. See [LICENSE](LICENSE), [CITATION.cff](CITATION.cff),
