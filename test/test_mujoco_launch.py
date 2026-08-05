@@ -261,14 +261,16 @@ def ros_observer(monkeypatch, tmp_path: Path):
 def test_headless_trajectory_launch_exits_with_exact_steps_and_topics(
     tmp_path: Path, ros_observer: _TopicObserver
 ) -> None:
-    """Run 1 s headless and verify exact physics plus RViz telemetry."""
+    """Run 2 s headless and verify exact physics plus RViz telemetry."""
     metrics_path = tmp_path / "trajectory_metrics.json"
     process = _start_launch(
         "ur5e_mujoco_rviz.launch.py",
         [
             "start_rviz:=false",
             "start_mujoco_viewer:=false",
-            "duration_sec:=1.0",
+            # Keep the publishers alive through DDS discovery on constrained
+            # CI hosts while retaining an exact finite-step assertion.
+            "duration_sec:=2.0",
             "scenario:=trajectory",
             "trajectory:=circle",
             f"metrics_path:={metrics_path}",
@@ -281,10 +283,10 @@ def test_headless_trajectory_launch_exits_with_exact_steps_and_topics(
     assert metrics_path.is_file(), output[-8000:]
     metrics = json.loads(metrics_path.read_text())
     assert metrics["state"] == "stopped"
-    assert metrics["control_steps"] == 500
-    assert metrics["mujoco_steps"] == 2000
+    assert metrics["control_steps"] == 1000
+    assert metrics["mujoco_steps"] == 4000
     assert metrics["simulated_duration_sec"] == pytest.approx(
-        1.0, abs=2.0e-12
+        2.0, abs=4.0e-12
     )
     assert metrics["hard_real_time_guarantee"] is False
     for key in (
