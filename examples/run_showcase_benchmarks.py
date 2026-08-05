@@ -47,12 +47,24 @@ from neuro_adaptive_control.adapters.mujoco_showcase_benchmarks import (  # noqa
 from neuro_adaptive_control.adapters.mujoco_ur5e_adapter import (  # noqa: E402
     MujocoUR5ePlant,
 )
+from examples.showcase_rendering import (  # noqa: E402
+    EVENT_COLOR,
+    HIGHER_COLOR,
+    LOWER_COLOR,
+    NAC_COLOR,
+    NOMINAL_COLOR,
+    WRENCH_COLOR,
+    Trace,
+    draw_metric_panel,
+    nice_upper_limit,
+)
 
 
 DEFAULT_OUTPUT_DIRECTORY = PROJECT_ROOT / "docs" / "assets"
 MODEL_PATH = Path("mujoco/ur5e_robotiq_2f85.xml")
 SOURCE_PATHS = (
     Path("examples/run_showcase_benchmarks.py"),
+    Path("examples/showcase_rendering.py"),
     Path("neuro_adaptive_control/adapters/mujoco_showcase_benchmarks.py"),
     Path("neuro_adaptive_control/adapters/mujoco_ur5e_adapter.py"),
     Path("neuro_adaptive_control/adapters/mujoco_payload_benchmark.py"),
@@ -91,16 +103,17 @@ def _history_hash(result: ShowcaseResult) -> str:
 
 
 def _report(
-    soft: ShowcaseResult,
-    stiff: ShowcaseResult,
+    lower: ShowcaseResult,
+    higher: ShowcaseResult,
     adaptive: ShowcaseResult,
+    nominal: ShowcaseResult,
     frozen: ShowcaseResult,
 ) -> dict[str, object]:
     import mujoco
 
-    results = (soft, stiff, adaptive, frozen)
+    results = (lower, higher, adaptive, nominal, frozen)
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "artifact_kind": "six_dof_nac_showcase_scenarios",
         "traceability": {
             "generator": "examples/run_showcase_benchmarks.py",
@@ -122,17 +135,19 @@ def _report(
                 "World-frame physical wrench at gripper_pinch; generalized "
                 "input h=E(rho)^T w; the same w is applied once by MuJoCo."
             ),
-            "comparison": compare_compliance(soft, stiff),
-            "soft_metrics": soft.metrics,
-            "stiff_metrics": stiff.metrics,
+            "comparison": compare_compliance(lower, higher),
+            "lower_stiffness_metrics": lower.metrics,
+            "higher_stiffness_metrics": higher.metrics,
         },
         "joint_drag": {
             "contract": (
                 "MuJoCo plant changes selected DOF damping/friction at 4 s; "
-                "coefficients and event are absent from the 42D NN input."
+                "the coefficients and event are absent from controller "
+                "observations, and the nominal controller model stays fixed."
             ),
-            "comparison": compare_joint_drag(adaptive, frozen),
+            "comparison": compare_joint_drag(adaptive, nominal, frozen),
             "adaptive_metrics": adaptive.metrics,
+            "nominal_model_based_metrics": nominal.metrics,
             "frozen_metrics": frozen.metrics,
         },
         "histories": [
@@ -213,68 +228,36 @@ def _font(size: int, *, bold: bool = False):
         return ImageFont.load_default()
 
 
-def _dashed_vertical(draw, x: int, top: int, bottom: int, color) -> None:
-    for dash_top in range(top + 2, bottom - 1, 10):
-        draw.line(
-            (x, dash_top, x, min(dash_top + 5, bottom - 1)),
-            fill=color,
-            width=2,
-        )
-
-
-def _trace(
-    draw,
-    times: np.ndarray,
-    values: np.ndarray,
-    *,
-    bounds: tuple[int, int, int, int],
-    time_range: tuple[float, float],
-    value_limit: float,
-    color,
-) -> None:
-    if len(times) < 2:
-        return
-    left, top, width, height = bounds
-    start, end = time_range
-    points = []
-    for stamp, value in zip(times, values):
-        x = left + int(width * (float(stamp) - start) / (end - start))
-        normalized = np.clip(float(value) / value_limit, -1.0, 1.0)
-        y = top + height // 2 - int(0.46 * height * normalized)
-        points.append((x, y))
-    draw.line(points, fill=color, width=3)
-
-
 def _draw_force_overlay(draw, phase: str, offset_x: int) -> None:
     if phase == "lateral_push":
         start = (offset_x + 365, 115)
         end = (offset_x + 285, 115)
-        draw.line((start, end), fill=(255, 155, 35), width=7)
+        draw.line((start, end), fill=WRENCH_COLOR, width=7)
         draw.polygon(
             (
                 (end[0], end[1]),
                 (end[0] + 20, end[1] - 11),
                 (end[0] + 20, end[1] + 11),
             ),
-            fill=(255, 155, 35),
+            fill=WRENCH_COLOR,
         )
         draw.text(
             (offset_x + 315, 80),
             "6 N push",
-            fill=(255, 190, 70),
+            fill=WRENCH_COLOR,
             font=_font(14, bold=True),
         )
     if phase == "twist_moment":
         box = (offset_x + 290, 65, offset_x + 390, 165)
-        draw.arc(box, start=35, end=315, fill=(255, 155, 35), width=7)
+        draw.arc(box, start=35, end=315, fill=WRENCH_COLOR, width=7)
         draw.polygon(
             ((offset_x + 385, 116), (offset_x + 372, 105), (offset_x + 370, 123)),
-            fill=(255, 155, 35),
+            fill=WRENCH_COLOR,
         )
         draw.text(
             (offset_x + 300, 42),
             "0.4 Nm twist",
-            fill=(255, 190, 70),
+            fill=WRENCH_COLOR,
             font=_font(14, bold=True),
         )
 
@@ -310,107 +293,79 @@ def _save_animation(frames: list, webp_path: Path, gif_path: Path, fps: float) -
 def _write_compliance_animation(
     webp_path: Path,
     gif_path: Path,
-    soft: ShowcaseResult,
-    stiff: ShowcaseResult,
+    lower: ShowcaseResult,
+    higher: ShowcaseResult,
 ) -> None:
     from PIL import Image, ImageDraw
 
     fps = 8.0
     start_time = 6.5
-    end_time = float(soft.time[-1])
+    end_time = float(lower.time[-1])
     frame_count = int(np.floor((end_time - start_time) * fps)) + 1
-    candidate = np.flatnonzero(soft.time >= start_time)
+    candidate = np.flatnonzero(lower.time >= start_time)
     indices = np.linspace(candidate[0], candidate[-1], frame_count, dtype=int)
-    soft_frames = _render_frames(soft, indices, payload=True)
-    stiff_frames = _render_frames(stiff, indices, payload=True)
+    lower_frames = _render_frames(lower, indices, payload=True)
+    higher_frames = _render_frames(higher, indices, payload=True)
     frames = []
-    top_plot = (980, 42, 285, 112)
-    lower_plot = (980, 212, 285, 105)
+    lower_position_error = 1000.0 * np.linalg.norm(
+        lower.impedance_pose[:, :3] - lower.actual_pose[:, :3], axis=1
+    )
+    higher_position_error = 1000.0 * np.linalg.norm(
+        higher.impedance_pose[:, :3] - higher.actual_pose[:, :3], axis=1
+    )
+    lower_orientation_error = 1000.0 * np.linalg.norm(
+        lower.impedance_pose[:, 3:] - lower.actual_pose[:, 3:], axis=1
+    )
+    higher_orientation_error = 1000.0 * np.linalg.norm(
+        higher.impedance_pose[:, 3:] - higher.actual_pose[:, 3:], axis=1
+    )
+    first_index = int(candidate[0])
     for output_index, history_index in enumerate(indices):
         canvas = Image.new("RGB", (1280, 390), color=(20, 22, 26))
-        canvas.paste(soft_frames[output_index], (0, 30))
-        canvas.paste(stiff_frames[output_index], (480, 30))
+        canvas.paste(lower_frames[output_index], (0, 30))
+        canvas.paste(higher_frames[output_index], (480, 30))
         draw = ImageDraw.Draw(canvas)
         draw.text(
-            (180, 7), "Soft impedance", fill="white", font=_font(15, bold=True)
+            (174, 7), "Lower stiffness", fill="white", font=_font(15, bold=True)
         )
         draw.text(
-            (640, 7), "Stiff impedance", fill="white", font=_font(15, bold=True)
+            (642, 7), "Higher stiffness", fill="white", font=_font(15, bold=True)
         )
-        phase = soft.phase[history_index]
+        phase = lower.phase[history_index]
         _draw_force_overlay(draw, phase, 0)
         _draw_force_overlay(draw, phase, 480)
-        draw.text(
-            (980, 12),
-            "Measured compliance",
-            fill="white",
-            font=_font(14, bold=True),
-        )
-        for bounds in (top_plot, lower_plot):
-            left, top, width, height = bounds
-            draw.rectangle(
-                (left, top, left + width, top + height),
-                outline=(150, 150, 150),
-            )
-            draw.line(
-                (left, top + height // 2, left + width, top + height // 2),
-                fill=(80, 80, 80),
-            )
-        visible = slice(indices[0], history_index + 1)
-        _trace(
-            draw,
-            soft.time[visible],
-            1000.0
-            * (soft.actual_pose[visible, 1] - soft.desired_pose[visible, 1]),
-            bounds=top_plot,
-            time_range=(start_time, end_time),
-            value_limit=60.0,
-            color=(255, 80, 80),
-        )
-        _trace(
-            draw,
-            stiff.time[visible],
-            1000.0
-            * (stiff.actual_pose[visible, 1] - stiff.desired_pose[visible, 1]),
-            bounds=top_plot,
-            time_range=(start_time, end_time),
-            value_limit=60.0,
-            color=(80, 160, 255),
-        )
-        _trace(
-            draw,
-            soft.time[visible],
-            180.0
-            / np.pi
-            * (soft.actual_pose[visible, 5] - soft.desired_pose[visible, 5]),
-            bounds=lower_plot,
-            time_range=(start_time, end_time),
-            value_limit=2.5,
-            color=(255, 80, 80),
-        )
-        _trace(
-            draw,
-            stiff.time[visible],
-            180.0
-            / np.pi
-            * (stiff.actual_pose[visible, 5] - stiff.desired_pose[visible, 5]),
-            bounds=lower_plot,
-            time_range=(start_time, end_time),
-            value_limit=2.5,
-            color=(80, 160, 255),
-        )
-        draw.text(
-            (980, 160),
-            "Y deflection [mm] | red soft | blue stiff",
-            fill="white",
-            font=_font(12),
-        )
-        draw.text(
-            (980, 325), "Rz deflection [deg]", fill="white", font=_font(12)
+        draw_metric_panel(
+            canvas,
+            title="Fixed-tuning impedance tracking",
+            time=lower.time,
+            current_index=int(history_index),
+            first_index=first_index,
+            upper_title="Actual-to-impedance error [mm]",
+            upper_traces=(
+                Trace("Lower K", lower_position_error, LOWER_COLOR),
+                Trace("Higher K", higher_position_error, HIGHER_COLOR),
+            ),
+            upper_limit=nice_upper_limit(
+                lower_position_error[first_index:],
+                higher_position_error[first_index:],
+                floor=0.1,
+            ),
+            lower_title="Rotation-vector error [mrad]",
+            lower_traces=(
+                Trace("Lower K", lower_orientation_error, LOWER_COLOR),
+                Trace("Higher K", higher_orientation_error, HIGHER_COLOR),
+            ),
+            lower_limit=nice_upper_limit(
+                lower_orientation_error[first_index:],
+                higher_orientation_error[first_index:],
+                floor=0.1,
+            ),
+            events=((7.0, WRENCH_COLOR), (10.0, WRENCH_COLOR)),
+            summary="Same NAC tuning | adaptation enabled",
         )
         draw.text(
             (10, 368),
-            f"t={soft.time[history_index]:05.2f}s | {phase} | same measured wrench",
+            f"t={lower.time[history_index]:05.2f}s | {phase} | same measured wrench",
             fill="white",
             font=_font(13),
         )
@@ -422,7 +377,7 @@ def _write_drag_animation(
     webp_path: Path,
     gif_path: Path,
     adaptive: ShowcaseResult,
-    frozen: ShowcaseResult,
+    nominal: ShowcaseResult,
 ) -> None:
     from PIL import Image, ImageDraw
 
@@ -430,103 +385,80 @@ def _write_drag_animation(
     frame_count = int(np.floor(adaptive.time[-1] * fps)) + 1
     indices = np.linspace(0, len(adaptive.time) - 1, frame_count, dtype=int)
     adaptive_frames = _render_frames(adaptive, indices, payload=False)
-    frozen_frames = _render_frames(frozen, indices, payload=False)
+    nominal_frames = _render_frames(nominal, indices, payload=False)
     frames = []
-    top_plot = (980, 42, 285, 112)
-    lower_plot = (980, 212, 285, 105)
     event_time = float(adaptive.metrics["event_time_sec"])
-    event_x = top_plot[0] + int(top_plot[2] * event_time / adaptive.time[-1])
+    adaptive_position = 1000.0 * np.linalg.norm(
+        adaptive.desired_pose[:, :3] - adaptive.actual_pose[:, :3], axis=1
+    )
+    nominal_position = 1000.0 * np.linalg.norm(
+        nominal.desired_pose[:, :3] - nominal.actual_pose[:, :3], axis=1
+    )
+    adaptive_rotation = 1000.0 * np.linalg.norm(
+        adaptive.desired_pose[:, 3:] - adaptive.actual_pose[:, 3:], axis=1
+    )
+    nominal_rotation = 1000.0 * np.linalg.norm(
+        nominal.desired_pose[:, 3:] - nominal.actual_pose[:, 3:], axis=1
+    )
     for output_index, history_index in enumerate(indices):
         canvas = Image.new("RGB", (1280, 390), color=(20, 22, 26))
         canvas.paste(adaptive_frames[output_index], (0, 30))
-        canvas.paste(frozen_frames[output_index], (480, 30))
+        canvas.paste(nominal_frames[output_index], (480, 30))
         draw = ImageDraw.Draw(canvas)
         draw.text(
             (180, 7), "Adaptive NAC", fill="white", font=_font(15, bold=True)
         )
         draw.text(
-            (620, 7),
-            "Frozen at disturbance",
+            (617, 7),
+            "Fixed nominal model-based",
             fill="white",
             font=_font(15, bold=True),
         )
-        draw.text(
-            (980, 12),
-            "Tracking after hidden drag",
-            fill="white",
-            font=_font(14, bold=True),
-        )
-        for bounds in (top_plot, lower_plot):
-            left, top, width, height = bounds
-            draw.rectangle(
-                (left, top, left + width, top + height),
-                outline=(150, 150, 150),
-            )
-            _dashed_vertical(draw, event_x, top, top + height, (190, 90, 220))
-        visible = slice(0, history_index + 1)
-        adaptive_position = 1000.0 * np.linalg.norm(
-            adaptive.desired_pose[visible, :3]
-            - adaptive.actual_pose[visible, :3],
-            axis=1,
-        )
-        frozen_position = 1000.0 * np.linalg.norm(
-            frozen.desired_pose[visible, :3] - frozen.actual_pose[visible, :3],
-            axis=1,
-        )
-        adaptive_rotation = 1000.0 * np.linalg.norm(
-            adaptive.desired_pose[visible, 3:]
-            - adaptive.actual_pose[visible, 3:],
-            axis=1,
-        )
-        frozen_rotation = 1000.0 * np.linalg.norm(
-            frozen.desired_pose[visible, 3:] - frozen.actual_pose[visible, 3:],
-            axis=1,
-        )
-        for values, bounds, color in (
-            (adaptive_position, top_plot, (255, 80, 80)),
-            (frozen_position, top_plot, (80, 160, 255)),
-            (adaptive_rotation, lower_plot, (255, 80, 80)),
-            (frozen_rotation, lower_plot, (80, 160, 255)),
-        ):
-            _trace(
-                draw,
-                adaptive.time[visible],
-                values,
-                bounds=bounds,
-                time_range=(0.0, adaptive.time[-1]),
-                value_limit=2.5,
-                color=color,
-            )
-        draw.text(
-            (980, 160),
-            "Position error [mm] | red adaptive | blue frozen",
-            fill="white",
-            font=_font(12),
-        )
-        draw.text(
-            (980, 325),
-            "Rotation-vector error [mrad]",
-            fill="white",
-            font=_font(12),
+        draw_metric_panel(
+            canvas,
+            title="Tracking after hidden joint drag",
+            time=adaptive.time,
+            current_index=int(history_index),
+            first_index=0,
+            upper_title="Position tracking error [mm]",
+            upper_traces=(
+                Trace("NAC", adaptive_position, NAC_COLOR),
+                Trace("Nominal", nominal_position, NOMINAL_COLOR),
+            ),
+            upper_limit=nice_upper_limit(
+                adaptive_position, nominal_position, floor=1.0
+            ),
+            lower_title="Rotation-vector error [mrad]",
+            lower_traces=(
+                Trace("NAC", adaptive_rotation, NAC_COLOR),
+                Trace("Nominal", nominal_rotation, NOMINAL_COLOR),
+            ),
+            lower_limit=nice_upper_limit(
+                adaptive_rotation, nominal_rotation, floor=1.0
+            ),
+            events=((event_time, EVENT_COLOR),),
+            summary="Purple: hidden plant change | fixed model",
         )
         if adaptive.time[history_index] >= event_time:
             for offset in (0, 480):
-                draw.ellipse(
-                    (offset + 210, 125, offset + 265, 180),
-                    outline=(255, 145, 35),
-                    width=5,
+                draw.rounded_rectangle(
+                    (offset + 296, 45, offset + 461, 72),
+                    radius=7,
+                    fill=(70, 47, 22),
+                    outline=WRENCH_COLOR,
+                    width=2,
                 )
                 draw.text(
-                    (offset + 270, 145),
-                    "SIMULATED DRAG",
-                    fill=(255, 175, 70),
-                    font=_font(13, bold=True),
+                    (offset + 308, 51),
+                    "HIDDEN JOINT DRAG",
+                    fill=WRENCH_COLOR,
+                    font=_font(11, bold=True),
                 )
         draw.text(
             (10, 368),
             (
                 f"t={adaptive.time[history_index]:05.2f}s | "
-                f"{adaptive.phase[history_index]} | plant change hidden from NN input"
+                f"{adaptive.phase[history_index]} | plant change hidden from both controllers"
             ),
             fill="white",
             font=_font(13),
@@ -544,25 +476,26 @@ def main() -> int:
     arguments = parser.parse_args()
     output = arguments.output_directory.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    soft = run_compliance_benchmark(ComplianceVariant.SOFT)
-    stiff = run_compliance_benchmark(ComplianceVariant.STIFF)
+    lower = run_compliance_benchmark(ComplianceVariant.SOFT)
+    higher = run_compliance_benchmark(ComplianceVariant.STIFF)
     adaptive = run_joint_drag_benchmark(DragVariant.ADAPTIVE)
+    nominal = run_joint_drag_benchmark(DragVariant.NOMINAL)
     frozen = run_joint_drag_benchmark(DragVariant.FROZEN)
-    report = _report(soft, stiff, adaptive, frozen)
+    report = _report(lower, higher, adaptive, nominal, frozen)
     report_path = output / "showcase_scenarios_metrics.json"
     report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     if not arguments.skip_animations:
         _write_compliance_animation(
             output / "compliance_comparison.webp",
             output / "compliance_comparison.gif",
-            soft,
-            stiff,
+            lower,
+            higher,
         )
         _write_drag_animation(
             output / "joint_drag_comparison.webp",
             output / "joint_drag_comparison.gif",
             adaptive,
-            frozen,
+            nominal,
         )
     print(
         json.dumps(

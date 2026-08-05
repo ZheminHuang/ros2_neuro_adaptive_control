@@ -1,14 +1,15 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "artifact_kind": "six_dof_nac_showcase_scenarios",
   "traceability": {
     "generator": "examples/run_showcase_benchmarks.py",
-    "generator_sha256": "247a5f58c85ce203c95364bb5a4be0f21f340802a2da82843a5d0e329d7c7171",
+    "generator_sha256": "86e560d18fe615ce5e539fefc97cb62a3cbc201a175f1607ce66e3b0ed3715b3",
     "source_files_sha256": {
-      "examples/run_showcase_benchmarks.py": "247a5f58c85ce203c95364bb5a4be0f21f340802a2da82843a5d0e329d7c7171",
-      "neuro_adaptive_control/adapters/mujoco_showcase_benchmarks.py": "0cac344eadce2f8e83dffc2f3f0c98fd619b4e3e2d8bb39337cc19f9b330d8a5",
+      "examples/run_showcase_benchmarks.py": "86e560d18fe615ce5e539fefc97cb62a3cbc201a175f1607ce66e3b0ed3715b3",
+      "examples/showcase_rendering.py": "6ddfa455d2feff0927f6d19c3379958da1ee08419c45616d1bac117e17da6780",
+      "neuro_adaptive_control/adapters/mujoco_showcase_benchmarks.py": "a6d71ce1bc8c74bfe5e2d473cb57314f9982083235d5dbd3b8c6b5a4dfa88fac",
       "neuro_adaptive_control/adapters/mujoco_ur5e_adapter.py": "6a24bbecff872a98279c4d921e6869187d35280e4f91847015c624db3e82315e",
-      "neuro_adaptive_control/adapters/mujoco_payload_benchmark.py": "cf87a153345e96af612d4afe95f09e6340e7199e20d8de5d732117bce8b5c750",
+      "neuro_adaptive_control/adapters/mujoco_payload_benchmark.py": "37ef5bafe40a960d2ac777f3ee621e23e2587749395dd8dfa5d4bb35be77d5bf",
       "neuro_adaptive_control/adapters/pose_wrench_to_torque.py": "a7653d86d02ba2392ea3c85e31dd9031b2ea70d2eecfd7a4f6facb855d6b51c3",
       "neuro_adaptive_control/core/pose_impedance_model.py": "5b28a6d67a3c25fbf1779717ccc954f18ee051b17ddd6ab758bcfa3a31c5329e",
       "neuro_adaptive_control/core/pose_neuro_adaptive_controller.py": "1c29d2fa642c8571ac753e8fc50b8237ac0c4107f8afa04a5643cfd785b9fc13",
@@ -24,11 +25,14 @@
   "compliance": {
     "contract": "World-frame physical wrench at gripper_pinch; generalized input h=E(rho)^T w; the same w is applied once by MuJoCo.",
     "comparison": {
-      "translation_soft_to_stiff_ratio": 1.8936386094882023,
-      "rotation_soft_to_stiff_ratio": 1.8984064798976352,
-      "both_trials_completed": true
+      "maximum_actual_to_impedance_position_rmse_m": 0.00028290130931754153,
+      "maximum_actual_to_impedance_orientation_rmse_rad": 7.633357658484977e-05,
+      "controller_tuning_identical_between_trials": true,
+      "online_adaptation_enabled_in_both_trials": true,
+      "both_trials_completed": true,
+      "fixed_tuning_tracking_gate_passed": true
     },
-    "soft_metrics": {
+    "lower_stiffness_metrics": {
       "success": true,
       "force_n": 6.0,
       "moment_nm": 0.4,
@@ -38,13 +42,15 @@
       "apparent_rotation_compliance_rad_per_nm": 0.07573220475815594,
       "actual_to_impedance_position_rmse_m": 0.00028290130931754153,
       "actual_to_impedance_orientation_rmse_rad": 7.633357658484977e-05,
+      "actual_to_impedance_position_max_error_m": 0.0012379585197114834,
+      "actual_to_impedance_orientation_max_error_rad": 0.0002877395560295698,
       "recovery_position_error_m": 5.833015403951873e-06,
       "recovery_orientation_error_rad": 1.4969859232432778e-05,
       "maximum_arm_torque_abs_nm": 33.49374220984767,
       "saturated_control_samples": 2,
       "completed_steps": 7000
     },
-    "stiff_metrics": {
+    "higher_stiffness_metrics": {
       "success": true,
       "force_n": 6.0,
       "moment_nm": 0.4,
@@ -54,6 +60,8 @@
       "apparent_rotation_compliance_rad_per_nm": 0.03989251277852756,
       "actual_to_impedance_position_rmse_m": 0.00017646287630855654,
       "actual_to_impedance_orientation_rmse_rad": 4.7272323468534616e-05,
+      "actual_to_impedance_position_max_error_m": 0.0007869006645308503,
+      "actual_to_impedance_orientation_max_error_rad": 0.00018435666309012767,
       "recovery_position_error_m": 4.8321181500125664e-06,
       "recovery_orientation_error_rad": 1.2774209908197203e-06,
       "maximum_arm_torque_abs_nm": 29.81788786496154,
@@ -62,11 +70,14 @@
     }
   },
   "joint_drag": {
-    "contract": "MuJoCo plant changes selected DOF damping/friction at 4 s; coefficients and event are absent from the 42D NN input.",
+    "contract": "MuJoCo plant changes selected DOF damping/friction at 4 s; the coefficients and event are absent from controller observations, and the nominal controller model stays fixed.",
     "comparison": {
-      "position_rmse_improvement_ratio": 0.8153369071457025,
-      "orientation_rmse_improvement_ratio": 0.7260246781790624,
-      "adaptation_advantage_gate_passed": true
+      "position_rmse_improvement_vs_nominal_ratio": 0.9341982067081736,
+      "orientation_rmse_improvement_vs_nominal_ratio": 0.9896791644060842,
+      "position_rmse_improvement_vs_frozen_ratio": 0.8153369071457025,
+      "orientation_rmse_improvement_vs_frozen_ratio": 0.7260246781790624,
+      "public_nominal_comparison_gate_passed": true,
+      "nn_adaptation_ablation_gate_passed": true
     },
     "adaptive_metrics": {
       "success": true,
@@ -83,6 +94,23 @@
       "weight_change_after_event": -0.08074245867456398,
       "maximum_arm_torque_abs_nm": 24.94188943892498,
       "saturated_control_samples": 0,
+      "completed_steps": 5000
+    },
+    "nominal_model_based_metrics": {
+      "success": true,
+      "event_time_sec": 4.0,
+      "damping_scale": 8.0,
+      "frictionloss_scale": 6.0,
+      "changed_joints": "shoulder_lift_joint,elbow_joint,wrist_2_joint",
+      "post_event_position_rmse_m": 0.0041210800259253435,
+      "post_event_orientation_rmse_rad": 0.04152863717319412,
+      "post_event_position_max_error_m": 0.006401744583110125,
+      "post_event_orientation_max_error_rad": 0.0675519575799267,
+      "recovery_position_error_m": 0.001603836983495923,
+      "recovery_orientation_error_rad": 0.0203315390003591,
+      "weight_change_after_event": 0.0,
+      "maximum_arm_torque_abs_nm": 25.46827789057589,
+      "saturated_control_samples": 1,
       "completed_steps": 5000
     },
     "frozen_metrics": {
@@ -118,6 +146,11 @@
       "scenario": "unknown_joint_drag",
       "variant": "adaptive_nac",
       "deterministic_history_sha256": "831816118117b413ffc1de4698245d05df48681321e7aa1a556dc8c55592b469"
+    },
+    {
+      "scenario": "unknown_joint_drag",
+      "variant": "nominal_model_based",
+      "deterministic_history_sha256": "3a54f4c02c326725cedd9ca58e91c77590d388228a14f4529b6205469ff76a89"
     },
     {
       "scenario": "unknown_joint_drag",

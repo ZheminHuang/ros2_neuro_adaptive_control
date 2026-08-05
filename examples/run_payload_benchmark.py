@@ -35,12 +35,20 @@ if __package__ in {None, ""}:
 from neuro_adaptive_control import __version__  # noqa: E402
 from neuro_adaptive_control.adapters.mujoco_payload_benchmark import (  # noqa: E402
     BenchmarkController,
-    DEFAULT_PAYLOAD_CASE,
     PayloadBenchmarkResult,
+    SHOWCASE_PAYLOAD_CASE,
     run_payload_suite,
 )
 from neuro_adaptive_control.adapters.mujoco_ur5e_adapter import (  # noqa: E402
     MujocoUR5ePlant,
+)
+from examples.showcase_rendering import (  # noqa: E402
+    EVENT_COLOR,
+    NAC_COLOR,
+    NOMINAL_COLOR,
+    Trace,
+    draw_metric_panel,
+    nice_upper_limit,
 )
 
 
@@ -51,6 +59,7 @@ RUNNER_PATH = Path(
 )
 SOURCE_PATHS = (
     RUNNER_PATH,
+    Path("examples/showcase_rendering.py"),
     Path("neuro_adaptive_control/adapters/model_based_controller.py"),
     Path("neuro_adaptive_control/adapters/mujoco_ur5e_adapter.py"),
     Path("neuro_adaptive_control/adapters/pose_wrench_to_torque.py"),
@@ -96,7 +105,7 @@ def _select(
 ) -> PayloadBenchmarkResult:
     for result in results:
         if (
-            result.config.payload == DEFAULT_PAYLOAD_CASE
+            result.config.payload == SHOWCASE_PAYLOAD_CASE
             and result.config.controller == controller
         ):
             return result
@@ -134,7 +143,7 @@ def _report(results, metrics: dict[str, object]) -> dict[str, object]:
         / float(nominal.metrics["unloaded_orientation_rmse_rad"])
     )
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "artifact_kind": "six_dof_unknown_payload_benchmark",
         "traceability": {
             "generator": "examples/run_payload_benchmark.py",
@@ -161,9 +170,20 @@ def _report(results, metrics: dict[str, object]) -> dict[str, object]:
             "loaded_trajectory": "one_smooth_xy_circle",
             "loaded_circle_radius_m": 0.04,
             "held_out_payload_mass_kg": [0.50, 0.75, 1.00],
+            "public_showcase_payload_mass_kg": 1.00,
             "gripper_effort_n": 5.0,
             "external_wrench_mode": "none",
             "payload_parameters_visible_to_adaptive_nac": False,
+            "payload_parameters_visible_to_nominal_controller": False,
+            "nominal_controller_model_updated_after_pickup": False,
+            "comparison_contract": {
+                "same_initial_state": True,
+                "same_reference_trajectory": True,
+                "same_deterministic_seed": True,
+                "same_mujoco_truth_dynamics": True,
+                "same_torque_limits": True,
+                "same_torque_rate_limits": True,
+            },
             "presentation": {
                 "rendered_geom_groups": [2],
                 "hidden_collision_geom_groups": [3],
@@ -417,104 +437,44 @@ def _render_frames(result: PayloadBenchmarkResult, indices: np.ndarray) -> list:
 
 
 def _draw_plot_panel(image, adaptive, nominal, index: int) -> None:
-    from PIL import ImageDraw, ImageFont
-
-    draw = ImageDraw.Draw(image)
-    try:
-        font = ImageFont.truetype("DejaVuSans.ttf", 13)
-        title_font = ImageFont.truetype("DejaVuSans-Bold.ttf", 14)
-    except OSError:
-        font = ImageFont.load_default()
-        title_font = font
-    origin_x = 980
-    top = 42
-    width = 285
-    height = 112
-    draw.text(
-        (origin_x, 12),
-        "Synchronized tracking error",
-        fill="white",
-        font=title_font,
+    position_adaptive = 1000.0 * np.linalg.norm(
+        adaptive.desired_pose[:, :3] - adaptive.actual_pose[:, :3], axis=1
     )
-    draw.rectangle(
-        (origin_x, top, origin_x + width, top + height),
-        outline=(150, 150, 150),
+    position_nominal = 1000.0 * np.linalg.norm(
+        nominal.desired_pose[:, :3] - nominal.actual_pose[:, :3], axis=1
     )
-    time = adaptive.time[: index + 1]
-    traces = (
-        (
-            np.linalg.norm(
-                adaptive.desired_pose[: index + 1, :3]
-                - adaptive.actual_pose[: index + 1, :3],
-                axis=1,
-            ),
-            (255, 80, 80),
-        ),
-        (
-            np.linalg.norm(
-                nominal.desired_pose[: index + 1, :3]
-                - nominal.actual_pose[: index + 1, :3],
-                axis=1,
-            ),
-            (80, 160, 255),
-        ),
+    orientation_adaptive = 1000.0 * np.linalg.norm(
+        adaptive.desired_pose[:, 3:] - adaptive.actual_pose[:, 3:], axis=1
     )
-    for values, color in traces:
-        if len(values) < 2:
-            continue
-        points = []
-        for stamp, value in zip(time, values):
-            x = origin_x + int(width * stamp / adaptive.time[-1])
-            y = top + height - int(height * min(float(value) / 0.05, 1.0))
-            points.append((x, y))
-        draw.line(points, fill=color, width=3)
-    second_top = 212
-    second_height = 105
-    draw.rectangle(
-        (origin_x, second_top, origin_x + width, second_top + second_height),
-        outline=(150, 150, 150),
+    orientation_nominal = 1000.0 * np.linalg.norm(
+        nominal.desired_pose[:, 3:] - nominal.actual_pose[:, 3:], axis=1
     )
-    nn_values = np.linalg.norm(adaptive.neural_estimate[: index + 1], axis=1)
-    if len(nn_values) >= 2:
-        points = []
-        for stamp, value in zip(time, nn_values):
-            x = origin_x + int(width * stamp / adaptive.time[-1])
-            y = second_top + second_height - int(
-                second_height * min(float(value) / 65.0, 1.0)
-            )
-            points.append((x, y))
-        draw.line(points, fill=(255, 190, 60), width=3)
     event_time = float(adaptive.metrics["payload_acquisition_time_sec"])
-    event_x = origin_x + int(width * event_time / adaptive.time[-1])
-    for plot_top, plot_bottom in (
-        (top, top + height),
-        (second_top, second_top + second_height),
-    ):
-        for dash_top in range(plot_top + 2, plot_bottom - 1, 10):
-            draw.line(
-                (event_x, dash_top, event_x, min(dash_top + 5, plot_bottom - 1)),
-                fill=(190, 90, 220),
-                width=2,
-            )
-    draw.text(
-        (origin_x, 162),
-        "red NAC | blue nominal | position error",
-        fill="white",
-        font=font,
+    draw_metric_panel(
+        image,
+        title="Unknown 1 kg payload",
+        time=adaptive.time,
+        current_index=index,
+        first_index=0,
+        upper_title="Position tracking error [mm]",
+        upper_traces=(
+            Trace("NAC", position_adaptive, NAC_COLOR),
+            Trace("Nominal", position_nominal, NOMINAL_COLOR),
+        ),
+        upper_limit=nice_upper_limit(
+            position_adaptive, position_nominal, floor=1.0
+        ),
+        lower_title="Rotation-vector error [mrad]",
+        lower_traces=(
+            Trace("NAC", orientation_adaptive, NAC_COLOR),
+            Trace("Nominal", orientation_nominal, NOMINAL_COLOR),
+        ),
+        lower_limit=nice_upper_limit(
+            orientation_adaptive, orientation_nominal, floor=1.0
+        ),
+        events=((event_time, EVENT_COLOR),),
+        summary="Purple: pickup | fixed nominal model",
     )
-    draw.text(
-        (origin_x, 325),
-        "yellow NN dynamics estimate",
-        fill="white",
-        font=font,
-    )
-    if adaptive.time[index] >= event_time:
-        draw.text(
-            (origin_x + 55, 188),
-            "PAYLOAD ACQUIRED",
-            fill=(220, 120, 255),
-            font=title_font,
-        )
 
 
 def _write_animations(
@@ -550,7 +510,7 @@ def _write_animations(
         draw.text((185, 7), "Adaptive NAC", fill="white", font=title_font)
         draw.text(
             (635, 7),
-            "Nominal model-based",
+            "Fixed nominal model-based",
             fill="white",
             font=title_font,
         )

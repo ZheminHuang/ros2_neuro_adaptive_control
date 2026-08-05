@@ -105,6 +105,10 @@ HELD_OUT_PAYLOAD_CASES = (
     ),
 )
 
+# The public animation uses one clear 1 kg example.  The complete held-out
+# adaptive/frozen suite remains available for machine-readable ablation data.
+SHOWCASE_PAYLOAD_CASE = HELD_OUT_PAYLOAD_CASES[-1]
+
 
 @dataclass(frozen=True)
 class PayloadBenchmarkConfig:
@@ -409,7 +413,16 @@ class MujocoPayloadBenchmarkRunner:
         )
         self.model_controller = MujocoModelBasedController(
             model_path=model_path,
-            oracle_payload_mass_kg=oracle_mass
+            oracle_payload_mass_kg=oracle_mass,
+            torque_limits=(80.0, 80.0, 80.0, 28.0, 28.0, 28.0),
+            torque_rate_limits=(
+                8000.0,
+                8000.0,
+                8000.0,
+                3000.0,
+                3000.0,
+                3000.0,
+            ),
         )
         self.state = SimulationState.START
         self.reason = "created"
@@ -546,7 +559,9 @@ class MujocoPayloadBenchmarkRunner:
                     generalized = output.command
                     neural = output.neural_estimate
                     impedance = output.model_state.position
-                    saturation_count += int(mapping.torque_saturated)
+                    saturation_count += int(
+                        mapping.torque_saturated or mapping.rate_saturated
+                    )
                 else:
                     model_output = self.model_controller.command(
                         all_joint_position=sample.all_joint_position,
@@ -565,6 +580,10 @@ class MujocoPayloadBenchmarkRunner:
                     generalized = np.zeros(6)
                     neural = np.zeros(6)
                     impedance = reference.position
+                    saturation_count += int(
+                        model_output.torque_saturated
+                        or model_output.rate_saturated
+                    )
                 contact = self.plant.contact_summary()
                 self._validate(sample, contact, torque)
                 next_sample = self.plant.advance(torque)
@@ -800,7 +819,7 @@ def run_payload_suite(
                 run_payload_benchmark(
                     PayloadBenchmarkConfig(
                         controller=controller,
-                        payload=DEFAULT_PAYLOAD_CASE,
+                        payload=SHOWCASE_PAYLOAD_CASE,
                     )
                 )
             )

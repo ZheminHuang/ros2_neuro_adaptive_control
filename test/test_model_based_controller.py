@@ -68,6 +68,24 @@ def test_nominal_controller_does_not_use_payload_truth():
     np.testing.assert_array_equal(loaded.oracle_payload_compensation, np.zeros(6))
 
 
+def test_nominal_controller_model_does_not_follow_plant_joint_drag():
+    plant = MujocoUR5ePlant()
+    controller = MujocoModelBasedController()
+    model_damping = controller.model.dof_damping.copy()
+    model_friction = controller.model.dof_frictionloss.copy()
+
+    plant.apply_joint_drag(
+        ("shoulder_lift_joint", "elbow_joint", "wrist_2_joint"),
+        damping_scale=8.0,
+        frictionloss_scale=6.0,
+    )
+
+    np.testing.assert_array_equal(controller.model.dof_damping, model_damping)
+    np.testing.assert_array_equal(
+        controller.model.dof_frictionloss, model_friction
+    )
+
+
 def test_oracle_adds_known_payload_gravity_only_after_acquisition():
     plant = MujocoUR5ePlant()
     controller = MujocoModelBasedController(

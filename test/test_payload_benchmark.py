@@ -20,7 +20,10 @@ import numpy as np
 
 from neuro_adaptive_control.adapters.mujoco_payload_benchmark import (
     BenchmarkController,
+    MujocoPayloadBenchmarkRunner,
     PayloadBenchmarkConfig,
+    SHOWCASE_PAYLOAD_CASE,
+    build_pose_mapper,
     evaluate_adaptation_advantage,
     payload_schedule,
     run_payload_benchmark,
@@ -64,6 +67,23 @@ def test_model_free_core_has_no_mujoco_dynamics_truth_access():
         "contact_model",
     ):
         assert forbidden not in source
+
+
+def test_public_nominal_payload_baseline_uses_identical_torque_limits():
+    runner = MujocoPayloadBenchmarkRunner(
+        PayloadBenchmarkConfig(
+            controller=BenchmarkController.NOMINAL_MODEL_BASED,
+            payload=SHOWCASE_PAYLOAD_CASE,
+        )
+    )
+    nac_limits = build_pose_mapper().config.torque_limits
+    nac_rate_limits = build_pose_mapper().config.torque_rate_limits
+    np.testing.assert_array_equal(
+        runner.model_controller.torque_limits, nac_limits
+    )
+    np.testing.assert_array_equal(
+        runner.model_controller.torque_rate_limits, nac_rate_limits
+    )
 
 
 def test_adaptive_nac_beats_payload_time_freeze_on_showcase_case():

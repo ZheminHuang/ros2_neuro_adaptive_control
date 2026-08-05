@@ -11,33 +11,39 @@ acquisition, demonstrated with full UR5e + Robotiq 2F-85 MuJoCo dynamics.
 
 ## Key results
 
-**Unknown payload — NN adaptation absorbs a dynamics change after pickup.**
-Across three hidden 0.50–1.00 kg payloads, continuing adaptation reduced median
-loaded position RMSE from 1.143 to 0.239 mm and rotation-vector RMSE from 1.057
-to 0.236 mrad versus freezing the learned weights at pickup.
+**Unknown 1 kg payload — adaptation handles an unmodeled dynamics change.**
+After grasping an unannounced 1.00 kg payload, adaptive NAC achieved 0.230 mm
+position RMSE and 0.236 mrad rotation-vector RMSE, versus 26.381 mm and
+133.329 mrad for a fixed nominal model-based controller during loaded tracking.
+The nominal controller received no payload mass, COM, or inertia and retained
+its pre-pickup model.
 
 <picture>
   <source srcset="docs/assets/payload_benchmark_comparison.webp" type="image/webp">
   <img src="docs/assets/payload_benchmark_comparison.gif" alt="Unknown-payload MuJoCo comparison">
 </picture>
 
-**Push and twist — NAC follows the commanded Cartesian impedance.** Under the
-same measured 6 N push and 0.4 N·m twist, the soft/stiff apparent-compliance
-ratios were 1.89 and 1.90; both returned to the fixed target after release.
+**Impedance-parameter robustness — one NAC tuning across impedance settings.**
+Without retuning the NAC gains, neural-network architecture, or adaptation
+hyperparameters—and with online weight adaptation enabled—NAC tracked two
+Cartesian impedance configurations under the same 6 N push and 0.4 N·m twist
+and returned to the target after release. Across both tested settings,
+actual-to-impedance RMSE remained below 0.283 mm and 0.077 mrad.
 
 <picture>
   <source srcset="docs/assets/compliance_comparison.webp" type="image/webp">
-  <img src="docs/assets/compliance_comparison.gif" alt="Soft and stiff impedance response in MuJoCo">
+  <img src="docs/assets/compliance_comparison.gif" alt="Fixed NAC tuning across two impedance settings in MuJoCo">
 </picture>
 
-**Hidden joint drag — online learning recovers without plant coefficients.**
-After MuJoCo changed selected joint damping/friction by 8×/6×, continued
-adaptation reduced post-event position RMSE by 81.5% and rotation-vector RMSE
-by 72.6% versus the identical controller frozen at the disturbance.
+**Hidden joint drag — adaptation handles an unmodeled plant change.** When
+MuJoCo introduced an unannounced 8×/6× increase in selected joint damping and
+friction, adaptive NAC achieved 0.271 mm position RMSE and 0.429 mrad
+rotation-vector RMSE after the event, versus 4.121 mm and 41.529 mrad for the
+fixed nominal model-based controller whose dynamics model was not updated.
 
 <picture>
   <source srcset="docs/assets/joint_drag_comparison.webp" type="image/webp">
-  <img src="docs/assets/joint_drag_comparison.gif" alt="Adaptive and frozen NAC under hidden joint drag">
+  <img src="docs/assets/joint_drag_comparison.gif" alt="Adaptive NAC and fixed nominal model-based control under hidden joint drag">
 </picture>
 
 These are deterministic results for the bundled MuJoCo model, not real-robot,

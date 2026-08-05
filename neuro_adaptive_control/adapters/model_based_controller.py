@@ -51,6 +51,8 @@ class ModelBasedOutput:
     task_acceleration: np.ndarray
     nominal_inverse_dynamics: np.ndarray
     oracle_payload_compensation: np.ndarray
+    torque_saturated: bool
+    rate_saturated: bool
 
 
 class MujocoModelBasedController:
@@ -181,15 +183,21 @@ class MujocoModelBasedController:
             support_moment = np.cross(payload - tcp, support_force)
             oracle = jacobian[:3].T @ support_force
             oracle += jacobian[3:].T @ support_moment
-        command = self._limit(nominal + oracle, dt)
+        command, torque_saturated, rate_saturated = self._limit(
+            nominal + oracle, dt
+        )
         return ModelBasedOutput(
             command=command,
             task_acceleration=desired_acceleration.copy(),
             nominal_inverse_dynamics=nominal.copy(),
             oracle_payload_compensation=oracle.copy(),
+            torque_saturated=torque_saturated,
+            rate_saturated=rate_saturated,
         )
 
-    def _limit(self, raw: np.ndarray, dt: float) -> np.ndarray:
+    def _limit(
+        self, raw: np.ndarray, dt: float
+    ) -> tuple[np.ndarray, bool, bool]:
         if not np.all(np.isfinite(raw)):
             raise FloatingPointError("model-based torque contains NaN or Inf")
         step = float(dt)
@@ -197,11 +205,14 @@ class MujocoModelBasedController:
             raise ValueError("dt must be finite and positive")
         delta = raw - self._last_command
         maximum_delta = self.torque_rate_limits * step
-        rate_limited = self._last_command + np.clip(
+        limited_delta = np.clip(
             delta,
             -maximum_delta,
             maximum_delta,
         )
+        rate_limited = self._last_command + limited_delta
         command = np.clip(rate_limited, -self.torque_limits, self.torque_limits)
+        rate_saturated = not np.array_equal(limited_delta, delta)
+        torque_saturated = not np.array_equal(command, rate_limited)
         self._last_command = command.copy()
-        return command
+        return command, torque_saturated, rate_saturated

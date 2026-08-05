@@ -2,7 +2,8 @@
 
 This internal protocol prevents the showcase from leaking MuJoCo truth into
 the adaptive controller or comparing unmatched scenarios. The public README
-contains only the generated animation and measured results.
+contains only the generated 1.00 kg animation and measured
+adaptive-versus-nominal results.
 
 ## Physical scenario
 
@@ -39,15 +40,20 @@ lift.
 1. `adaptive_nac`: two-layer V/W adaptation remains enabled.
 2. `frozen_at_payload`: identical NAC and history until acquisition, then both
    V and W are held at their exact event checkpoint.
-3. `nominal_model_based`: computed torque from the known nominal robot and
-   gripper model, without payload compensation.
+3. `nominal_model_based`: computed torque from the fixed pre-pickup robot and
+   gripper model, without payload mass, COM, or inertia compensation. Its
+   internal model is never updated from the MuJoCo plant.
 4. `oracle_model_based`: the nominal baseline plus known payload gravity/COM
    compensation after acquisition.
 
-All variants share the same plant case, reference, initial state, gripper
-effort, actuator limits, safety gates, simulation rate, and visualization
-camera. The oracle is an upper reference, not evidence that model-based
-control cannot address payload change when the payload is known.
+All variants share the same plant case, reference, initial state,
+deterministic seed, gripper effort, torque and torque-rate limits, safety
+gates, simulation rate, and visualization camera. The public comparison uses
+only the 1.00 kg case. The three adaptive/frozen payload pairs remain an
+online-adaptation ablation, and the oracle remains a supplementary reference
+rather than a public animation baseline. A model-based controller can
+compensate the change when the payload is identified and its model is updated;
+that is deliberately outside the fixed-nominal baseline tested here.
 
 ## Metrics and claim gate
 
@@ -63,9 +69,10 @@ The adaptive-advantage gate passes only if:
 - median loaded orientation RMSE is at least 10% below frozen; and
 - adaptive introduces no extra failed safety completion.
 
-Claims against nominal model-based control are axis/metric specific. The
-README reports nominal loaded-to-unloaded degradation and shows the oracle;
-it does not claim adaptive NAC has lower error in every metric.
+The public claim compares loaded-phase position and rotation-vector RMSE for
+adaptive NAC against the fixed nominal controller in the 1.00 kg case. It does
+not claim universal superiority over identified or payload-aware model-based
+control.
 
 ## Artifact contract
 
@@ -77,8 +84,9 @@ and the showcase nominal/oracle trials. It writes:
 - `payload_benchmark_results.png`: XYZ, rotation-vector, error, NN, and RMSE
   evidence; and
 - `payload_benchmark_comparison.webp`: full-color synchronized adaptive and
-  nominal MuJoCo states rendered from canonical qpos histories, plus error/NN
-  traces and a `PAYLOAD ACQUIRED` marker;
+  fixed-nominal MuJoCo states rendered from canonical qpos histories, plus
+  position/orientation error traces and a dashed pickup marker confined to
+  both metric cards;
 - `payload_benchmark_comparison.gif`: palette-quantized compatibility copy of
   the same synchronized animation.
 

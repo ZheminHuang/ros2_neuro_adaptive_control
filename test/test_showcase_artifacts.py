@@ -55,13 +55,19 @@ def test_showcase_metrics_support_only_the_concise_readme_claims():
     compliance = report["compliance"]["comparison"]
     drag = report["joint_drag"]["comparison"]
     assert compliance["both_trials_completed"]
-    assert 1.80 <= compliance["translation_soft_to_stiff_ratio"] <= 2.10
-    assert 1.80 <= compliance["rotation_soft_to_stiff_ratio"] <= 2.10
-    assert drag["adaptation_advantage_gate_passed"]
-    assert drag["position_rmse_improvement_ratio"] >= 0.10
-    assert drag["orientation_rmse_improvement_ratio"] >= 0.10
-    for text in ("1.89", "1.90", "81.5%", "72.6%"):
+    assert compliance["controller_tuning_identical_between_trials"]
+    assert compliance["online_adaptation_enabled_in_both_trials"]
+    assert compliance["fixed_tuning_tracking_gate_passed"]
+    assert compliance["maximum_actual_to_impedance_position_rmse_m"] <= 0.001
+    assert compliance["maximum_actual_to_impedance_orientation_rmse_rad"] <= 0.001
+    assert drag["public_nominal_comparison_gate_passed"]
+    assert drag["nn_adaptation_ablation_gate_passed"]
+    assert drag["position_rmse_improvement_vs_nominal_ratio"] >= 0.10
+    assert drag["orientation_rmse_improvement_vs_nominal_ratio"] >= 0.10
+    for text in ("0.283", "0.077", "4.121", "41.529"):
         assert text in readme
+    assert "1.89" not in readme
+    assert "1.90" not in readme
 
 
 def test_two_new_scenes_are_full_color_bounded_animations():

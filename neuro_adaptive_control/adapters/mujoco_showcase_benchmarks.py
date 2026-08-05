@@ -45,6 +45,7 @@ from .mujoco_payload_benchmark import (
     build_pose_mapper,
     payload_schedule,
 )
+from .model_based_controller import MujocoModelBasedController
 from .mujoco_ur5e_adapter import MujocoUR5ePlant
 
 
@@ -56,9 +57,10 @@ class ComplianceVariant(str, Enum):
 
 
 class DragVariant(str, Enum):
-    """Adaptation settings compared after the hidden plant change."""
+    """Controllers evaluated after the hidden plant change."""
 
     ADAPTIVE = "adaptive_nac"
+    NOMINAL = "nominal_model_based"
     FROZEN = "frozen_at_disturbance"
 
 
@@ -285,6 +287,12 @@ def run_compliance_benchmark(
         "actual_to_impedance_orientation_rmse_rad": _rmse(
             model_error[time >= 6.5, 3:]
         ),
+        "actual_to_impedance_position_max_error_m": float(
+            np.max(np.linalg.norm(model_error[time >= 6.5, :3], axis=1))
+        ),
+        "actual_to_impedance_orientation_max_error_rad": float(
+            np.max(np.linalg.norm(model_error[time >= 6.5, 3:], axis=1))
+        ),
         "recovery_position_error_m": float(
             np.mean(np.linalg.norm((desired - actual)[recovery, :3], axis=1))
         ),
@@ -373,6 +381,17 @@ def run_joint_drag_benchmark(variant: DragVariant | str) -> ShowcaseResult:
     initial_pose = np.concatenate((initial.tcp_position, np.zeros(3)))
     controller = build_pose_controller(initial_pose, seed=83)
     mapper = build_pose_mapper()
+    model_controller = MujocoModelBasedController(
+        torque_limits=(80.0, 80.0, 80.0, 28.0, 28.0, 28.0),
+        torque_rate_limits=(
+            8000.0,
+            8000.0,
+            8000.0,
+            3000.0,
+            3000.0,
+            3000.0,
+        ),
+    )
     controller.start(0.0)
     dt = 0.002
     duration = 10.0
@@ -403,41 +422,70 @@ def run_joint_drag_benchmark(variant: DragVariant | str) -> ShowcaseResult:
         sample = plant.kinematic_state()
         actual_pose, actual_velocity = _actual_pose(sample, reference_rotation)
         reference = joint_drag_reference(stamp, initial_pose)
-        checkpoint = controller.network.checkpoint()
-        output = controller.step(
-            actual_pose,
-            actual_velocity,
-            sample.arm_position,
-            sample.arm_velocity,
-            reference,
-            np.zeros(6),
-            dt=dt,
-            now=stamp,
-        )
-        if output.state.value == "fault":
-            raise RuntimeError(output.fault_reason)
         jacobian = np.vstack(
             (sample.translational_jacobian, sample.rotational_jacobian)
         )
-        mapped = mapper.map_running_command(
-            output.command, actual_pose[3:], jacobian, dt
-        )
-        if mapped.torque_saturated or mapped.rate_saturated:
-            controller.network.restore(checkpoint)
-        saturation_count += int(mapped.torque_saturated or mapped.rate_saturated)
-        next_sample = plant.advance(mapped.command)
-        _validate_sample(plant, next_sample, mapped.command)
+        if selected == DragVariant.NOMINAL:
+            model_output = model_controller.command(
+                all_joint_position=sample.all_joint_position,
+                all_joint_velocity=sample.all_joint_velocity,
+                actual_pose=actual_pose,
+                actual_pose_velocity=actual_velocity,
+                reference=reference,
+                rotation_vector=actual_pose[3:],
+                geometric_jacobian=jacobian,
+                tcp_position=sample.tcp_position,
+                payload_position=sample.object_position,
+                payload_acquired=False,
+                dt=dt,
+            )
+            torque_command = model_output.command
+            generalized_command = np.zeros(6)
+            neural_estimate = np.zeros(6)
+            impedance_position = reference.position
+            weight_norm = 0.0
+            saturated = (
+                model_output.torque_saturated or model_output.rate_saturated
+            )
+        else:
+            checkpoint = controller.network.checkpoint()
+            output = controller.step(
+                actual_pose,
+                actual_velocity,
+                sample.arm_position,
+                sample.arm_velocity,
+                reference,
+                np.zeros(6),
+                dt=dt,
+                now=stamp,
+            )
+            if output.state.value == "fault":
+                raise RuntimeError(output.fault_reason)
+            mapped = mapper.map_running_command(
+                output.command, actual_pose[3:], jacobian, dt
+            )
+            if mapped.torque_saturated or mapped.rate_saturated:
+                controller.network.restore(checkpoint)
+            torque_command = mapped.command
+            generalized_command = output.command
+            neural_estimate = output.neural_estimate
+            impedance_position = output.model_state.position
+            weight_norm = controller.network.combined_weight_norm
+            saturated = mapped.torque_saturated or mapped.rate_saturated
+        saturation_count += int(saturated)
+        next_sample = plant.advance(torque_command)
+        _validate_sample(plant, next_sample, torque_command)
         if plant.contact_summary().total_robot_environment_contacts:
             raise RuntimeError("joint-drag scenario must remain collision-free")
         next_actual, _ = _actual_pose(next_sample, reference_rotation)
         time[index] = next_sample.stamp_sec
         desired[index] = reference.position
-        impedance[index] = output.model_state.position
+        impedance[index] = impedance_position
         actual[index] = next_actual
-        command[index] = output.command
-        neural[index] = output.neural_estimate
-        torque[index] = mapped.command
-        weights[index] = controller.network.combined_weight_norm
+        command[index] = generalized_command
+        neural[index] = neural_estimate
+        torque[index] = torque_command
+        weights[index] = weight_norm
         qpos[index] = plant.data.qpos
         phases.append("hidden_drag" if stamp >= event_time else "nominal_dynamics")
     evaluation = (time >= event_time + 0.25) & (time < 9.0)
@@ -491,42 +539,74 @@ def run_joint_drag_benchmark(variant: DragVariant | str) -> ShowcaseResult:
 
 
 def compare_compliance(
-    soft: ShowcaseResult, stiff: ShowcaseResult
+    lower: ShowcaseResult, higher: ShowcaseResult
 ) -> Dict[str, float | bool]:
-    """Summarize the empirical compliance ratio without a superiority claim."""
-    translation_ratio = (
-        float(soft.metrics["apparent_translation_compliance_m_per_n"])
-        / float(stiff.metrics["apparent_translation_compliance_m_per_n"])
+    """Summarize fixed-tuning tracking across two impedance settings."""
+    maximum_position_rmse = max(
+        float(lower.metrics["actual_to_impedance_position_rmse_m"]),
+        float(higher.metrics["actual_to_impedance_position_rmse_m"]),
     )
-    rotation_ratio = (
-        float(soft.metrics["apparent_rotation_compliance_rad_per_nm"])
-        / float(stiff.metrics["apparent_rotation_compliance_rad_per_nm"])
+    maximum_orientation_rmse = max(
+        float(lower.metrics["actual_to_impedance_orientation_rmse_rad"]),
+        float(higher.metrics["actual_to_impedance_orientation_rmse_rad"]),
     )
     return {
-        "translation_soft_to_stiff_ratio": translation_ratio,
-        "rotation_soft_to_stiff_ratio": rotation_ratio,
+        "maximum_actual_to_impedance_position_rmse_m": maximum_position_rmse,
+        "maximum_actual_to_impedance_orientation_rmse_rad": (
+            maximum_orientation_rmse
+        ),
+        "controller_tuning_identical_between_trials": True,
+        "online_adaptation_enabled_in_both_trials": True,
         "both_trials_completed": bool(
-            soft.metrics["success"] and stiff.metrics["success"]
+            lower.metrics["success"] and higher.metrics["success"]
+        ),
+        "fixed_tuning_tracking_gate_passed": bool(
+            lower.metrics["success"]
+            and higher.metrics["success"]
+            and maximum_position_rmse <= 1.0e-3
+            and maximum_orientation_rmse <= 1.0e-3
         ),
     }
 
 
-def compare_joint_drag(
-    adaptive: ShowcaseResult, frozen: ShowcaseResult
-) -> Dict[str, float | bool]:
-    """Summarize the benefit of continuing online adaptation after the event."""
+def _tracking_improvement(
+    adaptive: ShowcaseResult, baseline: ShowcaseResult
+) -> tuple[float, float]:
     adaptive_position = float(adaptive.metrics["post_event_position_rmse_m"])
-    frozen_position = float(frozen.metrics["post_event_position_rmse_m"])
+    baseline_position = float(baseline.metrics["post_event_position_rmse_m"])
     adaptive_orientation = float(
         adaptive.metrics["post_event_orientation_rmse_rad"]
     )
-    frozen_orientation = float(frozen.metrics["post_event_orientation_rmse_rad"])
-    position_improvement = 1.0 - adaptive_position / frozen_position
-    orientation_improvement = 1.0 - adaptive_orientation / frozen_orientation
+    baseline_orientation = float(
+        baseline.metrics["post_event_orientation_rmse_rad"]
+    )
+    return (
+        1.0 - adaptive_position / baseline_position,
+        1.0 - adaptive_orientation / baseline_orientation,
+    )
+
+
+def compare_joint_drag(
+    adaptive: ShowcaseResult,
+    nominal: ShowcaseResult,
+    frozen: ShowcaseResult,
+) -> Dict[str, float | bool]:
+    """Summarize the public nominal comparison and NN adaptation ablation."""
+    nominal_position, nominal_orientation = _tracking_improvement(
+        adaptive, nominal
+    )
+    frozen_position, frozen_orientation = _tracking_improvement(
+        adaptive, frozen
+    )
     return {
-        "position_rmse_improvement_ratio": position_improvement,
-        "orientation_rmse_improvement_ratio": orientation_improvement,
-        "adaptation_advantage_gate_passed": bool(
-            position_improvement >= 0.10 and orientation_improvement >= 0.10
+        "position_rmse_improvement_vs_nominal_ratio": nominal_position,
+        "orientation_rmse_improvement_vs_nominal_ratio": nominal_orientation,
+        "position_rmse_improvement_vs_frozen_ratio": frozen_position,
+        "orientation_rmse_improvement_vs_frozen_ratio": frozen_orientation,
+        "public_nominal_comparison_gate_passed": bool(
+            nominal_position >= 0.10 and nominal_orientation >= 0.10
+        ),
+        "nn_adaptation_ablation_gate_passed": bool(
+            frozen_position >= 0.10 and frozen_orientation >= 0.10
         ),
     }

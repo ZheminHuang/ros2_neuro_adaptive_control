@@ -63,7 +63,19 @@ def test_payload_gate_and_readme_values_match_committed_report():
     assert metrics["adaptation_advantage_gate_passed"]
     assert metrics["adaptive_completion_ratio"] == 1.0
     assert metrics["frozen_completion_ratio"] == 1.0
-    for text in ("0.239", "1.143", "0.236", "1.057"):
+    showcase = report["showcase_dynamics_change"]
+    scenario = report["scenario"]
+    assert scenario["public_showcase_payload_mass_kg"] == 1.0
+    assert not scenario["payload_parameters_visible_to_nominal_controller"]
+    assert not scenario["nominal_controller_model_updated_after_pickup"]
+    assert all(scenario["comparison_contract"].values())
+    assert showcase["adaptive_loaded_position_rmse_m"] < (
+        showcase["nominal_loaded_position_rmse_m"]
+    )
+    assert showcase["adaptive_loaded_orientation_rmse_rad"] < (
+        showcase["nominal_loaded_orientation_rmse_rad"]
+    )
+    for text in ("0.230", "26.381", "0.236", "133.329"):
         assert text in readme
 
 
@@ -96,17 +108,25 @@ def test_payload_event_marker_is_dashed_and_confined_to_each_plot():
         trial
         for trial in report["trials"]
         if trial["controller"] == "adaptive_nac"
-        and trial["payload"]["name"] == "showcase_750g_offset"
+        and trial["payload"]["mass_kg"] == 1.0
     )
     event_time = adaptive["metrics"]["payload_acquisition_time_sec"]
-    event_x = 980 + int(285 * event_time / 15.0)
-    purple = (190, 90, 220)
+    first_time = 0.002
+    event_x = 988 + int(274 * (event_time - first_time) / (15.0 - first_time))
+    purple = (198, 105, 224)
+
+    def close_to_purple(pixel):
+        return max(
+            abs(channel - expected)
+            for channel, expected in zip(pixel, purple)
+        ) <= 20
+
     with Image.open(WEBP) as animation:
         animation.seek(animation.n_frames // 2)
         frame = animation.convert("RGB")
-        assert frame.getpixel((event_x, 44)) == purple
-        assert frame.getpixel((event_x, 180)) != purple
-        assert frame.getpixel((event_x, 214)) == purple
+        assert close_to_purple(frame.getpixel((event_x, 69)))
+        assert not close_to_purple(frame.getpixel((event_x, 170)))
+        assert close_to_purple(frame.getpixel((event_x, 209)))
 
 
 def test_payload_artifacts_contain_no_absolute_workspace_path():
