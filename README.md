@@ -11,8 +11,8 @@ acquisition, demonstrated with full UR5e + Robotiq 2F-85 MuJoCo dynamics.
 
 ## Key results
 
-**Unknown 1 kg payload — adaptation handles an unmodeled dynamics change.**
-After grasping an unannounced 1.00 kg payload, adaptive NAC achieved 0.230 mm
+**Unknown payload — adaptation handles an unmodeled dynamics change.**
+In the 1.00 kg showcase case, adaptive NAC achieved 0.230 mm
 position RMSE and 0.236 mrad rotation-vector RMSE, versus 26.381 mm and
 133.329 mrad for a fixed nominal model-based controller during loaded tracking.
 The nominal controller received no payload mass, COM, or inertia and retained
