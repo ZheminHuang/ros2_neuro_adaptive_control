@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "six_dof_nac_showcase_scenarios",
+  "traceability": {
+    "generator": "examples/run_showcase_benchmarks.py",
+    "generator_sha256": "247a5f58c85ce203c95364bb5a4be0f21f340802a2da82843a5d0e329d7c7171",
+    "source_files_sha256": {
+      "examples/run_showcase_benchmarks.py": "247a5f58c85ce203c95364bb5a4be0f21f340802a2da82843a5d0e329d7c7171",
+      "neuro_adaptive_control/adapters/mujoco_showcase_benchmarks.py": "0cac344eadce2f8e83dffc2f3f0c98fd619b4e3e2d8bb39337cc19f9b330d8a5",
+      "neuro_adaptive_control/adapters/mujoco_ur5e_adapter.py": "6a24bbecff872a98279c4d921e6869187d35280e4f91847015c624db3e82315e",
+      "neuro_adaptive_control/adapters/mujoco_payload_benchmark.py": "cf87a153345e96af612d4afe95f09e6340e7199e20d8de5d732117bce8b5c750",
+      "neuro_adaptive_control/adapters/pose_wrench_to_torque.py": "a7653d86d02ba2392ea3c85e31dd9031b2ea70d2eecfd7a4f6facb855d6b51c3",
+      "neuro_adaptive_control/core/pose_impedance_model.py": "5b28a6d67a3c25fbf1779717ccc954f18ee051b17ddd6ab758bcfa3a31c5329e",
+      "neuro_adaptive_control/core/pose_neuro_adaptive_controller.py": "1c29d2fa642c8571ac753e8fc50b8237ac0c4107f8afa04a5643cfd785b9fc13",
+      "neuro_adaptive_control/core/so3.py": "d3f0cebbbb8ff9bc7a08f37c284dad6a5c17edfdb5b057f65c1bb6048d3f0dd5"
+    },
+    "model": "mujoco/ur5e_robotiq_2f85.xml",
+    "model_sha256": "bf73927d1854fd79beaaa700a6ad8bfab49b796e2368de2e02f6c97f0856c360",
+    "package_version": "0.3.0",
+    "python_version": "3.10.12",
+    "numpy_version": "1.24.4",
+    "mujoco_version": "3.9.0"
+  },
+  "compliance": {
+    "contract": "World-frame physical wrench at gripper_pinch; generalized input h=E(rho)^T w; the same w is applied once by MuJoCo.",
+    "comparison": {
+      "translation_soft_to_stiff_ratio": 1.8936386094882023,
+      "rotation_soft_to_stiff_ratio": 1.8984064798976352,
+      "both_trials_completed": true
+    },
+    "soft_metrics": {
+      "success": true,
+      "force_n": 6.0,
+      "moment_nm": 0.4,
+      "push_hold_deflection_m": 0.04913844364454945,
+      "twist_hold_deflection_rad": 0.03029288190326238,
+      "apparent_translation_compliance_m_per_n": 0.008189740607424908,
+      "apparent_rotation_compliance_rad_per_nm": 0.07573220475815594,
+      "actual_to_impedance_position_rmse_m": 0.00028290130931754153,
+      "actual_to_impedance_orientation_rmse_rad": 7.633357658484977e-05,
+      "recovery_position_error_m": 5.833015403951873e-06,
+      "recovery_orientation_error_rad": 1.4969859232432778e-05,
+      "maximum_arm_torque_abs_nm": 33.49374220984767,
+      "saturated_control_samples": 2,
+      "completed_steps": 7000
+    },
+    "stiff_metrics": {
+      "success": true,
+      "force_n": 6.0,
+      "moment_nm": 0.4,
+      "push_hold_deflection_m": 0.025949219348580035,
+      "twist_hold_deflection_rad": 0.015957005111411026,
+      "apparent_translation_compliance_m_per_n": 0.004324869891430006,
+      "apparent_rotation_compliance_rad_per_nm": 0.03989251277852756,
+      "actual_to_impedance_position_rmse_m": 0.00017646287630855654,
+      "actual_to_impedance_orientation_rmse_rad": 4.7272323468534616e-05,
+      "recovery_position_error_m": 4.8321181500125664e-06,
+      "recovery_orientation_error_rad": 1.2774209908197203e-06,
+      "maximum_arm_torque_abs_nm": 29.81788786496154,
+      "saturated_control_samples": 2,
+      "completed_steps": 7000
+    }
+  },
+  "joint_drag": {
+    "contract": "MuJoCo plant changes selected DOF damping/friction at 4 s; coefficients and event are absent from the 42D NN input.",
+    "comparison": {
+      "position_rmse_improvement_ratio": 0.8153369071457025,
+      "orientation_rmse_improvement_ratio": 0.7260246781790624,
+      "adaptation_advantage_gate_passed": true
+    },
+    "adaptive_metrics": {
+      "success": true,
+      "event_time_sec": 4.0,
+      "damping_scale": 8.0,
+      "frictionloss_scale": 6.0,
+      "changed_joints": "shoulder_lift_joint,elbow_joint,wrist_2_joint",
+      "post_event_position_rmse_m": 0.0002711744560050141,
+      "post_event_orientation_rmse_rad": 0.0004286102367039186,
+      "post_event_position_max_error_m": 0.0005664617541789918,
+      "post_event_orientation_max_error_rad": 0.0007926695940629414,
+      "recovery_position_error_m": 5.396561100701273e-05,
+      "recovery_orientation_error_rad": 1.5059319187213157e-05,
+      "weight_change_after_event": -0.08074245867456398,
+      "maximum_arm_torque_abs_nm": 24.94188943892498,
+      "saturated_control_samples": 0,
+      "completed_steps": 5000
+    },
+    "frozen_metrics": {
+      "success": true,
+      "event_time_sec": 4.0,
+      "damping_scale": 8.0,
+      "frictionloss_scale": 6.0,
+      "changed_joints": "shoulder_lift_joint,elbow_joint,wrist_2_joint",
+      "post_event_position_rmse_m": 0.0014684821520831754,
+      "post_event_orientation_rmse_rad": 0.0015644118377349545,
+      "post_event_position_max_error_m": 0.0023002668579526144,
+      "post_event_orientation_max_error_rad": 0.0023856794814853407,
+      "recovery_position_error_m": 0.0013551474581975065,
+      "recovery_orientation_error_rad": 0.0012983489076830207,
+      "weight_change_after_event": 0.0,
+      "maximum_arm_torque_abs_nm": 25.074223196183944,
+      "saturated_control_samples": 0,
+      "completed_steps": 5000
+    }
+  },
+  "histories": [
+    {
+      "scenario": "push_and_twist_compliance",
+      "variant": "soft_impedance",
+      "deterministic_history_sha256": "8458b477ad96d33e406484d8299be2726df2f82b5d8e7a3545339e6eaee980b0"
+    },
+    {
+      "scenario": "push_and_twist_compliance",
+      "variant": "stiff_impedance",
+      "deterministic_history_sha256": "43dc858f1c160c414b91abb4ddde249215618f0d3c22ca1404234250d6e593ce"
+    },
+    {
+      "scenario": "unknown_joint_drag",
+      "variant": "adaptive_nac",
+      "deterministic_history_sha256": "831816118117b413ffc1de4698245d05df48681321e7aa1a556dc8c55592b469"
+    },
+    {
+      "scenario": "unknown_joint_drag",
+      "variant": "frozen_at_disturbance",
+      "deterministic_history_sha256": "e2360443c9dab3e7b723cec31b7e829cb3a1614d66914466c294366fec72575b"
+    }
+  ],
+  "claim_scope": "Empirical deterministic MuJoCo evidence for the bundled model; no passivity, hardware-safety, hard-real-time, or universal claim."
+}

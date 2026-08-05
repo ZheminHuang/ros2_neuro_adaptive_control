@@ -138,22 +138,90 @@ def test_plant_rejects_stale_or_duplicate_sequence() -> None:
 
 
 @pytest.mark.parametrize(
-    ("torque", "injected_force"),
+    ("torque", "injected_force", "injected_torque"),
     (
-        ((np.nan, 0.0, 0.0, 0.0, 0.0, 0.0), (0.0, 0.0, 0.0)),
-        ((0.0,) * 6, (0.0, np.inf, 0.0)),
+        (
+            (np.nan, 0.0, 0.0, 0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+            (0.0, 0.0, 0.0),
+        ),
+        ((0.0,) * 6, (0.0, np.inf, 0.0), (0.0, 0.0, 0.0)),
+        ((0.0,) * 6, (0.0, 0.0, 0.0), (0.0, np.nan, 0.0)),
     ),
 )
-def test_plant_rejects_nonfinite_torque_or_injected_force(
-    torque, injected_force
+def test_plant_rejects_nonfinite_torque_or_injected_wrench(
+    torque, injected_force, injected_torque
 ) -> None:
     """NaN/Inf commands must be rejected before any physics step."""
     plant = MujocoUR5ePlant()
     with pytest.raises(ValueError, match="finite vector"):
-        plant.advance(torque, injected_force_world=injected_force)
+        plant.advance(
+            torque,
+            injected_force_world=injected_force,
+            injected_torque_world=injected_torque,
+        )
     assert plant.data.time == 0.0
     assert plant.sequence_id == 0
     assert plant.step_count == 0
+
+
+def test_hidden_joint_drag_is_baseline_referenced_and_resettable() -> None:
+    """Plant-only damping/friction changes must never accumulate across calls."""
+    plant = MujocoUR5ePlant()
+    joint_names = ("shoulder_lift_joint", "elbow_joint", "wrist_2_joint")
+    addresses = plant._addresses(joint_names, qpos=False)
+    baseline_damping = plant.model.dof_damping.copy()
+    baseline_friction = plant.model.dof_frictionloss.copy()
+
+    plant.apply_joint_drag(
+        joint_names,
+        damping_scale=8.0,
+        frictionloss_scale=6.0,
+    )
+    np.testing.assert_allclose(
+        plant.model.dof_damping[addresses],
+        8.0 * baseline_damping[addresses],
+    )
+    np.testing.assert_allclose(
+        plant.model.dof_frictionloss[addresses],
+        6.0 * baseline_friction[addresses],
+    )
+    plant.apply_joint_drag(
+        joint_names,
+        damping_scale=8.0,
+        frictionloss_scale=6.0,
+    )
+    np.testing.assert_allclose(
+        plant.model.dof_damping[addresses],
+        8.0 * baseline_damping[addresses],
+    )
+
+    plant.reset()
+    np.testing.assert_array_equal(plant.model.dof_damping, baseline_damping)
+    np.testing.assert_array_equal(
+        plant.model.dof_frictionloss, baseline_friction
+    )
+
+
+@pytest.mark.parametrize(
+    ("names", "damping", "friction"),
+    (
+        ((), 2.0, 2.0),
+        (("not_a_joint",), 2.0, 2.0),
+        (("elbow_joint",), 0.0, 2.0),
+        (("elbow_joint",), 2.0, np.inf),
+    ),
+)
+def test_hidden_joint_drag_rejects_invalid_parameters(
+    names, damping, friction
+) -> None:
+    plant = MujocoUR5ePlant()
+    with pytest.raises(ValueError):
+        plant.apply_joint_drag(
+            names,
+            damping_scale=damping,
+            frictionloss_scale=friction,
+        )
 
 
 def test_new_mujoco_solver_warning_faults_the_runner(monkeypatch) -> None:

@@ -29,9 +29,9 @@ history hashes.
 Artifacts:
 
 - [JSON](assets/mujoco_tracking_benchmark.json), SHA-256
-  `ab377e512ac349551914f2195534813ad55232a08260cf8eca8363bcba11c8f9`;
+  `3b2f7149264515d2eceba19a5f835dd9a00a218889b397b084b9b78750711595`;
 - [PNG](assets/mujoco_tracking_benchmark.png), SHA-256
-  `a6e767b95d5be0423a70e35bb37579a78c75f11c9c35e7fb8c12f8332eab9d5f`;
+  `aeb8f43741b10f2c6bd64bf678a12032ee8d6001b9283d8a2222f51b593c9db7`;
 - generator: `examples/run_mujoco_benchmark.py`;
 - runner: `neuro_adaptive_control/adapters/mujoco_simulation.py`.
 
@@ -74,10 +74,10 @@ All four runs stopped without fault. The acceptance record passes the 0.03 m
 circle RMSE limit, 0.08 m circle maximum-error limit, and minimum 10%
 matched-baseline improvement.
 
-The adaptive circle wall duration was 4.179872640 s for 8.0 s simulated time,
-a real-time factor of 1.91393. Its measured NAC times were 0.139414 ms median,
-0.151849 ms p95, and 0.161215 ms p99. MuJoCo four-substep times were
-0.317160 ms median, 0.337921 ms p95, and 0.358439 ms p99. These are
+The adaptive circle wall duration was 4.804511075 s for 8.0 s simulated time,
+a real-time factor of 1.66510. Its measured NAC times were 0.156923 ms median,
+0.185116 ms p95, and 0.258418 ms p99. MuJoCo four-substep times were
+0.368985 ms median, 0.421683 ms p95, and 0.531982 ms p99. These are
 standalone synchronous-runner measurements on one host, not ROS wall-rate or
 hard-real-time guarantees.
 
@@ -91,7 +91,7 @@ the frozen baseline history is
 Artifacts:
 
 - [JSON](assets/mujoco_grasp_benchmark.json), SHA-256
-  `dcf70a5975e3571414b685d1a372b555a2b5332ed9e8a7f2ff3ce31c9ea9a268`;
+  `dfb3278303ebc5af14ec1f823740fa83d9c0dbb2c945e4d5259c8eb6506615d1`;
 - [PNG](assets/mujoco_grasp_benchmark.png), SHA-256
   `52d3921985c1dd85d225f9b3ae9a31b8a1ff7be0698dca14704089d27296a9bd`;
 - generator: `examples/run_mujoco_grasp.py`;
@@ -121,7 +121,7 @@ hold -> lower -> release -> retreat`. The controller still runs at a fixed
 
 The deterministic-history SHA-256 is
 `e7c8bc75fa4b8bd61efa83efc4527ed60d04022874efb43e8966596981d00303`.
-The measured wall duration was 7.624596971 s and real-time factor 1.44270;
+The measured wall duration was 8.599336345 s and real-time factor 1.27917;
 again, this is not a hard-real-time guarantee.
 
 ## ROS launch wall-clock measurements

@@ -225,6 +225,8 @@ class MujocoUR5ePlant:
         self._initial_object_qpos = self._free_joint_qpos("object_freejoint")
         self._initial_ctrl = np.zeros(self.model.nu, dtype=float)
         self._initial_ctrl[self._gripper_actuator_id] = 0.0
+        self._baseline_dof_damping = self.model.dof_damping.copy()
+        self._baseline_dof_frictionloss = self.model.dof_frictionloss.copy()
         self.reset()
 
     @property
@@ -292,6 +294,8 @@ class MujocoUR5ePlant:
 
     def reset(self) -> MujocoKinematicState:
         """Reset every dynamic, actuator, applied-force, and RNG state."""
+        self.model.dof_damping[:] = self._baseline_dof_damping
+        self.model.dof_frictionloss[:] = self._baseline_dof_frictionloss
         mujoco.mj_resetData(self.model, self.data)
         self.data.qpos[:] = self._initial_qpos
         self.data.qvel[:] = 0.0
@@ -309,6 +313,37 @@ class MujocoUR5ePlant:
         mujoco.mj_forward(self.model, self.data)
         self._desired_tcp_rotation = self._tcp_rotation().copy()
         return self.kinematic_state()
+
+    def apply_joint_drag(
+        self,
+        joint_names: Iterable[str],
+        *,
+        damping_scale: float,
+        frictionloss_scale: float,
+    ) -> None:
+        """
+        Apply a hidden deterministic damping/friction change to arm DOFs.
+
+        This plant-owner API deliberately exposes no changed coefficient to the
+        controller. Repeated calls are referenced to the immutable baseline,
+        and :meth:`reset` restores the original model exactly.
+        """
+        names = tuple(joint_names)
+        if not names or any(name not in ARM_JOINT_NAMES for name in names):
+            raise ValueError("joint_names must contain known UR5e arm joints")
+        damping = float(damping_scale)
+        friction = float(frictionloss_scale)
+        if not np.isfinite(damping) or damping <= 0.0:
+            raise ValueError("damping_scale must be finite and positive")
+        if not np.isfinite(friction) or friction <= 0.0:
+            raise ValueError("frictionloss_scale must be finite and positive")
+        addresses = self._addresses(names, qpos=False)
+        self.model.dof_damping[addresses] = (
+            self._baseline_dof_damping[addresses] * damping
+        )
+        self.model.dof_frictionloss[addresses] = (
+            self._baseline_dof_frictionloss[addresses] * friction
+        )
 
     def _tcp_rotation(self) -> np.ndarray:
         return self.data.site_xmat[self._tcp_site_id].reshape(3, 3).copy()
@@ -490,6 +525,7 @@ class MujocoUR5ePlant:
         arm_torque: Iterable[float],
         *,
         injected_force_world: Iterable[float] = (0.0, 0.0, 0.0),
+        injected_torque_world: Iterable[float] = (0.0, 0.0, 0.0),
         substeps: int = 4,
     ) -> MujocoKinematicState:
         """Advance exactly four ZOH substeps using one accepted command stamp."""
@@ -498,6 +534,9 @@ class MujocoUR5ePlant:
         torque = _finite_vector(arm_torque, 6, "arm_torque")
         injected = _finite_vector(
             injected_force_world, 3, "injected_force_world"
+        )
+        injected_torque = _finite_vector(
+            injected_torque_world, 3, "injected_torque_world"
         )
         if self.sequence_id != self.step_count:
             raise RuntimeError("stale or duplicate command sequence")
@@ -510,13 +549,13 @@ class MujocoUR5ePlant:
         )
         for _ in range(substeps):
             self.data.qfrc_applied[:] = 0.0
-            if np.any(injected):
+            if np.any(injected) or np.any(injected_torque):
                 point = self.data.site_xpos[self._tcp_site_id].copy()
                 mujoco.mj_applyFT(
                     self.model,
                     self.data,
                     injected,
-                    np.zeros(3),
+                    injected_torque,
                     point,
                     self._injection_body_id,
                     self.data.qfrc_applied,

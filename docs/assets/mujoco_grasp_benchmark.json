@@ -29,7 +29,7 @@
     "maximum_joint_velocity_rad_s": 0.724289501007184,
     "maximum_penetration_m": 0.00066019549338657,
     "object_lift_height_m": 0.07764573697282398,
-    "real_time_factor": 1.3894342298948832,
+    "real_time_factor": 1.2791684798324923,
     "returned_height_error_m": 2.7755575615628914e-17,
     "simulated_duration_sec": 11.000000000001952,
     "solver_warning_count": 0,
@@ -37,7 +37,7 @@
     "success": true,
     "torque_saturation_count": 0,
     "unexpected_contact_count": 0,
-    "wall_duration_sec": 7.916891468
+    "wall_duration_sec": 8.599336345000001
   },
   "scenario": {
     "control_period_sec": 0.002,
@@ -80,7 +80,7 @@
     "source_files_sha256": {
       "neuro_adaptive_control/adapters/mujoco_grasp.py": "f4d747e9207a808fdff93ba887be9134f6005274f2d3c50c6f2f1c933468ed25",
       "neuro_adaptive_control/adapters/mujoco_simulation.py": "6208ff5823a0d6ba589f66e88bf6eaf1a1730d8d19a81841d0791d03a3dd7246",
-      "neuro_adaptive_control/adapters/mujoco_ur5e_adapter.py": "d9bfdccb92d0864cf0afba71f2846c03e5991ff426559b2b49d9fe01b1fbf930",
+      "neuro_adaptive_control/adapters/mujoco_ur5e_adapter.py": "6a24bbecff872a98279c4d921e6869187d35280e4f91847015c624db3e82315e",
       "neuro_adaptive_control/adapters/robotiq_gripper_adapter.py": "28679152a43f44fe376f69e4815061b1a949afbecbd7b3eb9c2318454ce51ea1",
       "neuro_adaptive_control/adapters/ur5e_wrench_to_torque.py": "a3d973a63da58dc14062d90935db4a7d46079360d6f00358e7f24079d308bcd2",
       "neuro_adaptive_control/core/impedance_model.py": "dfcfebf81fa2baa6793726d9a16cc24b3d61191bf504eccd8c49cb9016289d79",

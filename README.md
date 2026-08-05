@@ -9,37 +9,41 @@ acquisition, demonstrated with full UR5e + Robotiq 2F-85 MuJoCo dynamics.
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Candidate](https://img.shields.io/badge/v0.3.0-candidate-orange)](CHANGELOG.md)
 
-![Synchronized adaptive NAC and nominal model-based MuJoCo payload benchmark](docs/assets/payload_benchmark_comparison.webp)
-
 ## Key results
 
-The physical object exists from the first MuJoCo step. Its mass, inertia,
-collision, contact, and transfer from table support to the closed gripper all
-participate in the dynamics; the NAC never receives payload mass, COM,
-inertia, contact parameters, `qM`, or `qfrc_bias`.
+**Unknown payload — NN adaptation absorbs a dynamics change after pickup.**
+Across three hidden 0.50–1.00 kg payloads, continuing adaptation reduced median
+loaded position RMSE from 1.143 to 0.239 mm and rotation-vector RMSE from 1.057
+to 0.236 mrad versus freezing the learned weights at pickup.
 
-Across three held-out 0.50–1.00 kg payloads with different COM and inertia,
-both controllers completed the grasp, 80 mm lift, one 40 mm-radius Cartesian
-circle, replacement, and release safely:
+<picture>
+  <source srcset="docs/assets/payload_benchmark_comparison.webp" type="image/webp">
+  <img src="docs/assets/payload_benchmark_comparison.gif" alt="Unknown-payload MuJoCo comparison">
+</picture>
 
-| Loaded-phase median | Adaptive NAC | Frozen at pickup | Improvement |
-|---|---:|---:|---:|
-| Position RMSE | 0.239 mm | 1.143 mm | 79.1% lower |
-| Rotation-vector RMSE | 0.236 mrad | 1.057 mrad | 77.7% lower |
-| Completion | 3 / 3 | 3 / 3 | no added failures |
+**Push and twist — NAC follows the commanded Cartesian impedance.** Under the
+same measured 6 N push and 0.4 N·m twist, the soft/stiff apparent-compliance
+ratios were 1.89 and 1.90; both returned to the fixed target after release.
 
-For the offset 0.75 kg showcase, the nominal model-based controller's loaded
-position RMSE was 12.38× its unloaded value and its orientation RMSE was 4.92×
-its unloaded value. The payload-aware oracle is included as an upper reference,
-so the comparison does not imply that every model-based controller must ignore
-payload changes.
+<picture>
+  <source srcset="docs/assets/compliance_comparison.webp" type="image/webp">
+  <img src="docs/assets/compliance_comparison.gif" alt="Soft and stiff impedance response in MuJoCo">
+</picture>
 
-![Desired and measured trajectories, errors, neural compensation, and loaded-phase metrics](docs/assets/payload_benchmark_results.png)
+**Hidden joint drag — online learning recovers without plant coefficients.**
+After MuJoCo changed selected joint damping/friction by 8×/6×, continued
+adaptation reduced post-event position RMSE by 81.5% and rotation-vector RMSE
+by 72.6% versus the identical controller frozen at the disturbance.
+
+<picture>
+  <source srcset="docs/assets/joint_drag_comparison.webp" type="image/webp">
+  <img src="docs/assets/joint_drag_comparison.gif" alt="Adaptive and frozen NAC under hidden joint drag">
+</picture>
 
 These are deterministic results for the bundled MuJoCo model, not real-robot,
-hard-real-time, or universal-superiority claims. Here *model-free* means the
-NAC does not require known robot or payload `M/C/G` dynamics; measured joint
-state, pose/twist, forward kinematics, and Jacobians are still required.
+hard-real-time, or universal-superiority claims. *Model-free* means the NAC
+does not require known robot or payload `M/C/G`; measured state, pose/twist,
+forward kinematics, and Jacobians are still required.
 
 ## Quick Start
 
@@ -73,6 +77,7 @@ committed evidence artifacts with:
 
 ```bash
 MUJOCO_GL=egl python3 examples/run_payload_benchmark.py
+MUJOCO_GL=egl python3 examples/run_showcase_benchmarks.py
 ```
 
 ## Architecture

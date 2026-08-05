@@ -63,12 +63,8 @@ def test_payload_gate_and_readme_values_match_committed_report():
     assert metrics["adaptation_advantage_gate_passed"]
     assert metrics["adaptive_completion_ratio"] == 1.0
     assert metrics["frozen_completion_ratio"] == 1.0
-    assert "0.239 mm" in readme
-    assert "1.143 mm" in readme
-    assert "79.1% lower" in readme
-    assert "0.236 mrad" in readme
-    assert "1.057 mrad" in readme
-    assert "77.7% lower" in readme
+    for text in ("0.239", "1.143", "0.236", "1.057"):
+        assert text in readme
 
 
 def test_showcase_images_are_real_bounded_animated_artifacts():
@@ -92,6 +88,25 @@ def test_showcase_images_are_real_bounded_animated_artifacts():
 
     readme = README.read_text(encoding="utf-8")
     assert "docs/assets/payload_benchmark_comparison.webp" in readme
+
+
+def test_payload_event_marker_is_dashed_and_confined_to_each_plot():
+    report = json.loads(REPORT.read_text(encoding="utf-8"))
+    adaptive = next(
+        trial
+        for trial in report["trials"]
+        if trial["controller"] == "adaptive_nac"
+        and trial["payload"]["name"] == "showcase_750g_offset"
+    )
+    event_time = adaptive["metrics"]["payload_acquisition_time_sec"]
+    event_x = 980 + int(285 * event_time / 15.0)
+    purple = (190, 90, 220)
+    with Image.open(WEBP) as animation:
+        animation.seek(animation.n_frames // 2)
+        frame = animation.convert("RGB")
+        assert frame.getpixel((event_x, 44)) == purple
+        assert frame.getpixel((event_x, 180)) != purple
+        assert frame.getpixel((event_x, 214)) == purple
 
 
 def test_payload_artifacts_contain_no_absolute_workspace_path():

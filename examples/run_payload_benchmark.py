@@ -486,7 +486,16 @@ def _draw_plot_panel(image, adaptive, nominal, index: int) -> None:
         draw.line(points, fill=(255, 190, 60), width=3)
     event_time = float(adaptive.metrics["payload_acquisition_time_sec"])
     event_x = origin_x + int(width * event_time / adaptive.time[-1])
-    draw.line((event_x, top, event_x, second_top + second_height), fill=(190, 90, 220))
+    for plot_top, plot_bottom in (
+        (top, top + height),
+        (second_top, second_top + second_height),
+    ):
+        for dash_top in range(plot_top + 2, plot_bottom - 1, 10):
+            draw.line(
+                (event_x, dash_top, event_x, min(dash_top + 5, plot_bottom - 1)),
+                fill=(190, 90, 220),
+                width=2,
+            )
     draw.text(
         (origin_x, 162),
         "red NAC | blue nominal | position error",
