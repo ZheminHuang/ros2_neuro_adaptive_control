@@ -19,12 +19,16 @@ All notable changes are documented here. The project follows semantic versioning
 - Matched adaptive, payload-time-frozen, nominal model-based, and payload-aware
   oracle controllers on one grasp/lift/loaded-trajectory scenario.
 - A native MuJoCo benchmark launch, aggregate acceptance gates, machine-readable
-  metrics, synchronized comparison GIF, and trajectory/error/NN result plot.
+  metrics, full-color synchronized comparison WebP, compatibility GIF, and
+  trajectory/error/NN result plot.
 - User-selected 120-neuron NAC gains with deterministic nonzero V/W
   initialization, heavier 0.50--1.00 kg payloads, and one smooth loaded
   Cartesian circle before physical replacement and release.
 - Higher-resolution antialiased MuJoCo evidence rendering with a closer camera,
   larger labels, phase/payload overlays, and increased GIF color depth.
+- Presentation-only group-2 environment geoms separated from unchanged
+  group-3 collision geoms, so MuJoCo retains all contact dynamics while the
+  viewer no longer overlays collision proxies on visual meshes.
 
 ### Candidate evidence
 
@@ -40,7 +44,7 @@ All notable changes are documented here. The project follows semantic versioning
 ### Release gate
 
 - This section is intentionally undated and unreleased. Only the feature
-  branch may be pushed until the user reviews the final GIF and metrics.
+  branch may be pushed until the user reviews the final animation and metrics.
 - `CITATION.cff` and the public release tag remain at v0.1.0. Do not merge,
   tag, or create v0.3.0 before explicit user approval and final CI/audit.
 

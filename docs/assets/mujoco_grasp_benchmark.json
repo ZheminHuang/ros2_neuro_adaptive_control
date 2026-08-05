@@ -29,7 +29,7 @@
     "maximum_joint_velocity_rad_s": 0.724289501007184,
     "maximum_penetration_m": 0.00066019549338657,
     "object_lift_height_m": 0.07764573697282398,
-    "real_time_factor": 1.4653150284338947,
+    "real_time_factor": 1.3894342298948832,
     "returned_height_error_m": 2.7755575615628914e-17,
     "simulated_duration_sec": 11.000000000001952,
     "solver_warning_count": 0,
@@ -37,7 +37,7 @@
     "success": true,
     "torque_saturation_count": 0,
     "unexpected_contact_count": 0,
-    "wall_duration_sec": 7.506918162000001
+    "wall_duration_sec": 7.916891468
   },
   "scenario": {
     "control_period_sec": 0.002,
@@ -70,7 +70,7 @@
     "model": "mujoco/ur5e_robotiq_2f85.xml",
     "model_manifest": "mujoco/SHA256SUMS",
     "model_manifest_sha256": "00818775e8bc4c74488c36cc9e3fa904e5cd767c58805b0391fc5467279ea848",
-    "model_sha256": "24c8d1318feb78e0319d24bcbb6f768820b85026c64c86b19a9b2d2decab8ce6",
+    "model_sha256": "bf73927d1854fd79beaaa700a6ad8bfab49b796e2368de2e02f6c97f0856c360",
     "mujoco_version": "3.9.0",
     "numpy_version": "1.24.4",
     "package_version": "0.3.0",

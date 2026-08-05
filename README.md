@@ -9,7 +9,7 @@ acquisition, demonstrated with full UR5e + Robotiq 2F-85 MuJoCo dynamics.
 [![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Candidate](https://img.shields.io/badge/v0.3.0-candidate-orange)](CHANGELOG.md)
 
-![Synchronized adaptive NAC and nominal model-based MuJoCo payload benchmark](docs/assets/payload_benchmark_comparison.gif)
+![Synchronized adaptive NAC and nominal model-based MuJoCo payload benchmark](docs/assets/payload_benchmark_comparison.webp)
 
 ## Key results
 
@@ -68,8 +68,8 @@ ros2 launch neuro_adaptive_control payload_benchmark.launch.py \
 
 Select a comparison controller with
 `controller:=frozen_at_payload`, `controller:=nominal_model_based`, or
-`controller:=oracle_model_based`. Reproduce every held-out trial and both
-committed figures with:
+`controller:=oracle_model_based`. Reproduce every held-out trial and all
+committed evidence artifacts with:
 
 ```bash
 MUJOCO_GL=egl python3 examples/run_payload_benchmark.py

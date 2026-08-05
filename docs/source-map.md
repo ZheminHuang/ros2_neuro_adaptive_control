@@ -54,8 +54,9 @@ The release dependency and first-party license review is recorded in
 [`license-audit.md`](license-audit.md).
 
 The v0.1, v0.2, and v0.3 benchmark images are generated from repository-owned
-simulation histories. The animated v0.3 comparison is deterministic offscreen
-MuJoCo rendering of those histories, not participant video or a manually
+simulation histories. The animated v0.3 WebP and compatibility GIF are
+deterministic offscreen MuJoCo renderings of those histories, not participant
+video or a manually
 spliced screen recording. The repository includes 28 audited Menagerie mesh
 files. No participant data, calibration, private log, manuscript figure, or
 other external media is included.

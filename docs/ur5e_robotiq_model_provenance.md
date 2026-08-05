@@ -33,7 +33,8 @@ writes `mujoco/ur5e_robotiq_2f85.xml`. The deliberate changes are:
 4. preserve the Robotiq split tendon, two loop-closure connects, driver
    equality, collision exclusions, pad friction, `solref`, and `solimp`;
 5. add a wrist sensor site, table, ground, and an explicitly inertialized
-   first-party 0.20 kg benchmark box;
+   first-party 0.20 kg benchmark box, with group-2 presentation geoms
+   separated from the unchanged group-3 collision geoms;
 6. add force/torque sensors at the gripper mount.
 
 The RViz URDF is independently authored from the generated MJCF's exact joint

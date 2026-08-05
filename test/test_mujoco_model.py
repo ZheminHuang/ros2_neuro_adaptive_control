@@ -331,6 +331,8 @@ def test_gripper_collisions_friction_and_contact_solver_parameters(model):
     contact_enabled = (model.geom_contype != 0) & (
         model.geom_conaffinity != 0
     )
+    assert np.all(model.geom_group[contact_enabled] == 3)
+    assert np.all(model.geom_group[~contact_enabled] == 2)
     for body_name in expected_collision_bodies:
         body_id = _id(model, mujoco.mjtObj.mjOBJ_BODY, body_name)
         body_contact_geoms = contact_enabled & (model.geom_bodyid == body_id)
@@ -360,9 +362,21 @@ def test_gripper_collisions_friction_and_contact_solver_parameters(model):
     for geom_name in ("ground", "table_top", "grasp_object_collision"):
         geom_id = _id(model, mujoco.mjtObj.mjOBJ_GEOM, geom_name)
         assert contact_enabled[geom_id]
+        assert model.geom_group[geom_id] == 3
+        assert model.geom_rgba[geom_id, 3] == 0.0
         assert np.all(model.geom_friction[geom_id] > 0.0)
         assert np.all(model.geom_solref[geom_id] > 0.0)
         assert np.all(model.geom_solimp[geom_id, :3] > 0.0)
+
+    for geom_name in (
+        "ground_visual",
+        "table_top_visual",
+        "grasp_object_visual",
+    ):
+        geom_id = _id(model, mujoco.mjtObj.mjOBJ_GEOM, geom_name)
+        assert not contact_enabled[geom_id]
+        assert model.geom_group[geom_id] == 2
+        assert model.geom_rgba[geom_id, 3] == 1.0
 
     expected_exclusions = (
         ("gripper_base", "gripper_right_driver"),

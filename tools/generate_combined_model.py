@@ -146,11 +146,25 @@ def _build_tree(project_root: Path) -> ET.ElementTree:
         worldbody,
         "geom",
         {
-            "name": "ground",
+            "name": "ground_visual",
             "type": "plane",
             "size": "2 2 0.05",
             "pos": "0 0 0",
             "rgba": "0.18 0.20 0.22 1",
+            "contype": "0",
+            "conaffinity": "0",
+            "group": "2",
+        },
+    )
+    ET.SubElement(
+        worldbody,
+        "geom",
+        {
+            "name": "ground",
+            "type": "plane",
+            "size": "2 2 0.05",
+            "pos": "0 0 0",
+            "rgba": "0 0 0 0",
             "friction": "0.9 0.02 0.002",
             "solref": "0.01 1",
             "solimp": "0.95 0.99 0.001",
@@ -162,10 +176,23 @@ def _build_tree(project_root: Path) -> ET.ElementTree:
         table,
         "geom",
         {
-            "name": "table_top",
+            "name": "table_top_visual",
             "type": "box",
             "size": "0.45 0.35 0.05",
             "rgba": "0.50 0.34 0.20 1",
+            "contype": "0",
+            "conaffinity": "0",
+            "group": "2",
+        },
+    )
+    ET.SubElement(
+        table,
+        "geom",
+        {
+            "name": "table_top",
+            "type": "box",
+            "size": "0.45 0.35 0.05",
+            "rgba": "0 0 0 0",
             "friction": "0.8 0.02 0.002",
             "solref": "0.008 1",
             "solimp": "0.95 0.99 0.001",
@@ -191,10 +218,23 @@ def _build_tree(project_root: Path) -> ET.ElementTree:
         object_body,
         "geom",
         {
-            "name": "grasp_object_collision",
+            "name": "grasp_object_visual",
             "type": "box",
             "size": "0.020 0.020 0.040",
             "rgba": "0.90 0.72 0.12 1",
+            "contype": "0",
+            "conaffinity": "0",
+            "group": "2",
+        },
+    )
+    ET.SubElement(
+        object_body,
+        "geom",
+        {
+            "name": "grasp_object_collision",
+            "type": "box",
+            "size": "0.020 0.020 0.040",
+            "rgba": "0 0 0 0",
             "friction": "1.1 0.03 0.003",
             "solref": "0.006 1",
             "solimp": "0.95 0.99 0.001",

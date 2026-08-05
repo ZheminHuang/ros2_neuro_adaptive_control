@@ -28,6 +28,7 @@ ROOT = Path(__file__).resolve().parents[1]
 REPORT = ROOT / "docs" / "assets" / "payload_benchmark_metrics.json"
 PLOT = ROOT / "docs" / "assets" / "payload_benchmark_results.png"
 GIF = ROOT / "docs" / "assets" / "payload_benchmark_comparison.gif"
+WEBP = ROOT / "docs" / "assets" / "payload_benchmark_comparison.webp"
 README = ROOT / "README.md"
 
 
@@ -71,6 +72,14 @@ def test_payload_gate_and_readme_values_match_committed_report():
 
 
 def test_showcase_images_are_real_bounded_animated_artifacts():
+    assert WEBP.stat().st_size <= 30 * 1024 * 1024
+    with Image.open(WEBP) as animation:
+        assert animation.format == "WEBP"
+        assert animation.mode in {"RGB", "RGBA"}
+        assert animation.size == (1280, 390)
+        assert animation.n_frames >= 120
+        animation.seek(animation.n_frames // 2)
+        assert len(animation.convert("RGB").getcolors(maxcolors=1_000_000)) > 256
     assert GIF.stat().st_size <= 10 * 1024 * 1024
     with Image.open(GIF) as animation:
         assert animation.format == "GIF"
@@ -80,6 +89,9 @@ def test_showcase_images_are_real_bounded_animated_artifacts():
         assert plot.format == "PNG"
         assert plot.width >= 1600
         assert plot.height >= 1200
+
+    readme = README.read_text(encoding="utf-8")
+    assert "docs/assets/payload_benchmark_comparison.webp" in readme
 
 
 def test_payload_artifacts_contain_no_absolute_workspace_path():

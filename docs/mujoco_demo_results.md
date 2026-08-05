@@ -29,9 +29,9 @@ history hashes.
 Artifacts:
 
 - [JSON](assets/mujoco_tracking_benchmark.json), SHA-256
-  `72a1b0c8e85d4c32511e8eca73542dcc05ce8147ccdbb9887f071f2fe650a06e`;
+  `ab377e512ac349551914f2195534813ad55232a08260cf8eca8363bcba11c8f9`;
 - [PNG](assets/mujoco_tracking_benchmark.png), SHA-256
-  `625ffabf5c8cf980b29152007dbce9cd20cc1558114e00338fc114eb6fdc0719`;
+  `a6e767b95d5be0423a70e35bb37579a78c75f11c9c35e7fb8c12f8332eab9d5f`;
 - generator: `examples/run_mujoco_benchmark.py`;
 - runner: `neuro_adaptive_control/adapters/mujoco_simulation.py`.
 
@@ -91,7 +91,7 @@ the frozen baseline history is
 Artifacts:
 
 - [JSON](assets/mujoco_grasp_benchmark.json), SHA-256
-  `16d456a73e3cbd97a3d7b920e3699742f545833b4674463f0ccd7238efd1e6e7`;
+  `dcf70a5975e3571414b685d1a372b555a2b5332ed9e8a7f2ff3ce31c9ea9a268`;
 - [PNG](assets/mujoco_grasp_benchmark.png), SHA-256
   `52d3921985c1dd85d225f9b3ae9a31b8a1ff7be0698dca14704089d27296a9bd`;
 - generator: `examples/run_mujoco_grasp.py`;

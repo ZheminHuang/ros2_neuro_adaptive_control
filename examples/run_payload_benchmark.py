@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Generate traceable unknown-payload metrics, result plot, and MuJoCo GIF."""
+"""Generate metrics, a result plot, and synchronized MuJoCo animations."""
 
 from __future__ import annotations
 
@@ -164,6 +164,12 @@ def _report(results, metrics: dict[str, object]) -> dict[str, object]:
             "gripper_effort_n": 5.0,
             "external_wrench_mode": "none",
             "payload_parameters_visible_to_adaptive_nac": False,
+            "presentation": {
+                "rendered_geom_groups": [2],
+                "hidden_collision_geom_groups": [3],
+                "primary_animation": "lossless_animated_webp",
+                "compatibility_animation": "palette_quantized_gif",
+            },
             "nac": {
                 "input_dim": 42,
                 "hidden_dim": 120,
@@ -391,7 +397,8 @@ def _render_frames(result: PayloadBenchmarkResult, indices: np.ndarray) -> list:
     camera.azimuth = 138.0
     camera.elevation = -18.0
     scene_option = mujoco.MjvOption()
-    scene_option.geomgroup[:] = 1
+    scene_option.geomgroup[:] = 0
+    scene_option.geomgroup[2] = 1
     frames = []
     try:
         for index in indices:
@@ -501,8 +508,9 @@ def _draw_plot_panel(image, adaptive, nominal, index: int) -> None:
         )
 
 
-def _write_gif(
-    path: Path,
+def _write_animations(
+    webp_path: Path,
+    gif_path: Path,
     adaptive: PayloadBenchmarkResult,
     nominal: PayloadBenchmarkResult,
 ) -> None:
@@ -548,17 +556,29 @@ def _write_gif(
             font=font,
         )
         _draw_plot_panel(canvas, adaptive, nominal, int(history_index))
-        frames.append(
-            canvas.convert(
-                "P",
-                palette=Image.ADAPTIVE,
-                colors=192,
-            )
-        )
+        frames.append(canvas)
     frames[0].save(
-        path,
+        webp_path,
+        format="WEBP",
         save_all=True,
         append_images=frames[1:],
+        duration=int(round(1000.0 / target_fps)),
+        loop=0,
+        lossless=True,
+        method=6,
+    )
+    compatibility_frames = [
+        frame.convert(
+            "P",
+            palette=Image.ADAPTIVE,
+            colors=192,
+        )
+        for frame in frames
+    ]
+    compatibility_frames[0].save(
+        gif_path,
+        save_all=True,
+        append_images=compatibility_frames[1:],
         duration=int(round(1000.0 / target_fps)),
         loop=0,
         optimize=True,
@@ -573,7 +593,13 @@ def main() -> int:
         type=Path,
         default=DEFAULT_OUTPUT_DIRECTORY,
     )
-    parser.add_argument("--skip-gif", action="store_true")
+    parser.add_argument(
+        "--skip-animations",
+        "--skip-gif",
+        dest="skip_animations",
+        action="store_true",
+        help="skip both the primary WebP and compatibility GIF",
+    )
     arguments = parser.parse_args()
     output = arguments.output_directory.resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -584,18 +610,20 @@ def main() -> int:
     oracle = _select(suite.trials, BenchmarkController.ORACLE_MODEL_BASED)
     report_path = output / "payload_benchmark_metrics.json"
     plot_path = output / "payload_benchmark_results.png"
+    webp_path = output / "payload_benchmark_comparison.webp"
     gif_path = output / "payload_benchmark_comparison.gif"
     report_path.write_text(
         json.dumps(_report(suite.trials, suite.metrics), indent=2) + "\n",
         encoding="utf-8",
     )
     _plot_results(plot_path, adaptive, frozen, nominal, oracle)
-    if not arguments.skip_gif:
-        _write_gif(gif_path, adaptive, nominal)
+    if not arguments.skip_animations:
+        _write_animations(webp_path, gif_path, adaptive, nominal)
     print(json.dumps(suite.metrics, indent=2))
     print(f"wrote {report_path.relative_to(PROJECT_ROOT)}")
     print(f"wrote {plot_path.relative_to(PROJECT_ROOT)}")
-    if not arguments.skip_gif:
+    if not arguments.skip_animations:
+        print(f"wrote {webp_path.relative_to(PROJECT_ROOT)}")
         print(f"wrote {gif_path.relative_to(PROJECT_ROOT)}")
     return 0
 

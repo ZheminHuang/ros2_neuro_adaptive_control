@@ -76,9 +76,13 @@ and the showcase nominal/oracle trials. It writes:
   per-trial metrics, and aggregate gate;
 - `payload_benchmark_results.png`: XYZ, rotation-vector, error, NN, and RMSE
   evidence; and
-- `payload_benchmark_comparison.gif`: synchronized adaptive and nominal
-  MuJoCo states rendered from canonical qpos histories, plus error/NN traces
-  and a `PAYLOAD ACQUIRED` marker.
+- `payload_benchmark_comparison.webp`: full-color synchronized adaptive and
+  nominal MuJoCo states rendered from canonical qpos histories, plus error/NN
+  traces and a `PAYLOAD ACQUIRED` marker;
+- `payload_benchmark_comparison.gif`: palette-quantized compatibility copy of
+  the same synchronized animation.
 
-The GIF uses one camera, timeline, reference, and payload. It is not a screen
-recording. Current evidence is deterministic simulation evidence only.
+Both animations use one camera, timeline, reference, and payload. Collision
+geometries remain active in dynamics but only group-2 visual geometries are
+rendered. These are not screen recordings. Current evidence is deterministic
+simulation evidence only.

@@ -233,14 +233,17 @@
         </body>
       </body>
     </body>
-    <geom name="ground" type="plane" size="2 2 0.05" pos="0 0 0" rgba="0.18 0.20 0.22 1" friction="0.9 0.02 0.002" solref="0.01 1" solimp="0.95 0.99 0.001" group="3" />
+    <geom name="ground_visual" type="plane" size="2 2 0.05" pos="0 0 0" rgba="0.18 0.20 0.22 1" contype="0" conaffinity="0" group="2" />
+    <geom name="ground" type="plane" size="2 2 0.05" pos="0 0 0" rgba="0 0 0 0" friction="0.9 0.02 0.002" solref="0.01 1" solimp="0.95 0.99 0.001" group="3" />
     <body name="table" pos="0 0.45 0.15">
-      <geom name="table_top" type="box" size="0.45 0.35 0.05" rgba="0.50 0.34 0.20 1" friction="0.8 0.02 0.002" solref="0.008 1" solimp="0.95 0.99 0.001" group="3" />
+      <geom name="table_top_visual" type="box" size="0.45 0.35 0.05" rgba="0.50 0.34 0.20 1" contype="0" conaffinity="0" group="2" />
+      <geom name="table_top" type="box" size="0.45 0.35 0.05" rgba="0 0 0 0" friction="0.8 0.02 0.002" solref="0.008 1" solimp="0.95 0.99 0.001" group="3" />
     </body>
     <body name="grasp_object" pos="-0.134 0.492 0.245">
       <freejoint name="object_freejoint" />
       <inertial mass="0.20" pos="0 0 0" diaginertia="0.000148333 0.000148333 0.0000833333" />
-      <geom name="grasp_object_collision" type="box" size="0.020 0.020 0.040" rgba="0.90 0.72 0.12 1" friction="1.1 0.03 0.003" solref="0.006 1" solimp="0.95 0.99 0.001" priority="2" group="3" />
+      <geom name="grasp_object_visual" type="box" size="0.020 0.020 0.040" rgba="0.90 0.72 0.12 1" contype="0" conaffinity="0" group="2" />
+      <geom name="grasp_object_collision" type="box" size="0.020 0.020 0.040" rgba="0 0 0 0" friction="1.1 0.03 0.003" solref="0.006 1" solimp="0.95 0.99 0.001" priority="2" group="3" />
       <site name="object_site" type="sphere" size="0.004" rgba="1 0.8 0 1" group="4" />
     </body>
   </worldbody>

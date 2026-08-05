@@ -246,7 +246,9 @@ class MujocoUR5ePlantNode(Node):
                 self._viewer.cam.distance = 1.45
                 self._viewer.cam.azimuth = 135.0
                 self._viewer.cam.elevation = -22.0
-                self._viewer.opt.geomgroup[3] = True
+                # Collision geoms remain active in MuJoCo dynamics but are
+                # deliberately hidden from the presentation viewer.
+                self._viewer.opt.geomgroup[3] = False
                 self._viewer.opt.flags[
                     mujoco.mjtVisFlag.mjVIS_CONTACTPOINT
                 ] = True

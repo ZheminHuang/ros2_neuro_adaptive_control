@@ -45,7 +45,7 @@ vendored in this repository.
 | `ament_index_python`, `launch`, `launch_ros` | package lookup and launch | Apache License 2.0 |
 | NumPy | controller mathematics | BSD-style |
 | Matplotlib | optional generated demo plot | PSF/BSD-compatible distribution terms |
-| Pillow | generated deterministic comparison GIF | HPND-style permissive license |
+| Pillow | generated deterministic WebP and compatibility GIF | HPND-style permissive license |
 | setuptools | build tooling | permissive; not bundled |
 | pytest and ament linters | tests only | permissive; not bundled |
 
